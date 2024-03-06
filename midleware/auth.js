@@ -9,6 +9,8 @@ const auth = async(req, res)=>{
         const payload = jwt.verify(token, process.env.JWT_SECRET);
         res.locals.email = payload?.email;
     } catch (error) {
-
+        res.status(400).send({
+            mesage : "Authentication invalid"
+        });
     }
 }
