@@ -37,7 +37,7 @@ const signIn = async (req, res) =>{
         if(comparePassword){
             const token = generateToken({email:exists.email});
             console.log(token);
-            return res.status(200).json({message:'User LoggedIn'});
+            return res.status(200).json({message:'User LoggedIn', token});
         }
     }
     return res.status(404).json('User Not Found');

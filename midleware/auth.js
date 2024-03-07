@@ -1,16 +1,20 @@
-const jwt = require('jsonwebtoken');
-require ('dotenv').config();
+const jwt = require('jsonwebtoken');;
+require('dotenv').config();
 
-const auth = async(req, res)=>{
-    const authToken = req.headers['authorization'];
-    const token = authToken && authToken.split(" ")[1];
-
-    try {
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
-        res.locals.email = payload?.email;
-    } catch (error) {
-        res.status(400).send({
-            mesage : "Authentication invalid"
-        });
+const authenticateUser = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    
+    if (!authHeader) {
+        return res.status(401).json({ message: 'Unauthorized: No token provided' });
     }
-}
+    const token = authHeader.split(' ')[1];    
+    try {
+        const decoded = jwt.verify(token, process.env.SECRET_KEY);
+        res.locals.email = decoded?.email;
+        next();
+    } catch (error) {
+        return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+    }
+};
+
+module.exports = authenticateUser;
