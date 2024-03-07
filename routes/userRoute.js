@@ -1,6 +1,7 @@
 const express = require('express');
 const userController = require('../controller/userController');
 const authenticateUser = require('../middleware/auth');
+const {upload} = require('../helper/fileHelper');
 
 const router = express.Router();
 
@@ -11,6 +12,7 @@ router.put('/updateUser/:id', userController.updateUser);
 router.delete('/deleteUser/:id', userController.deleteUser); 
 router.get('/getAllUser', authenticateUser, userController.getAllUser);
 router.get('/getUserById/:id', userController.getUserById);
+router.post('/dpUpload/:id', upload.single('File'), userController.uploadDp);
 
 
 module.exports = router;

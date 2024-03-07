@@ -4,7 +4,11 @@ const userSchema = new mongoose.Schema({
     username:{type: String, require:true, unique:true},
     password:{type:String, require:true},
     email:{type:String, require:true, unique:true},
-    role:{type:String, require:true}
+    role:{type:String, require:true},
+    filename:{type:String},
+    filepath:{type:String},
+    filetype:{type:String},
+    filesize:{type:String}
 });
 
 const user = mongoose.model('user', userSchema);

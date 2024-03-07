@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const db = require('./config/mongoConnector');
 const userRouting = require('./routes/userRoute');
 const projectRouting = require('./routes/projectRoute');
@@ -10,12 +11,18 @@ const commentRouting = require('./routes/commentRoute');
 const app = express();
 
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
 app.use('/user', userRouting);
 app.use('/project', projectRouting);
 app.use('/task', taskRouting);
 app.use('/team', teamRouting);
 app.use('/log', logRouting);
 app.use('/comment', commentRouting);
+
+
+
 
 
 app.listen(1111, ()=>{

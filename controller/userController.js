@@ -1,4 +1,3 @@
-const user = require('../model/userModel');
 const User = require('../model/userModel');
 const {passcrypt, compass} = require('../helper/passwordHelper');
 const {generateToken, refreshGenerateToken} = require('../helper/tokenHelper');
@@ -56,6 +55,22 @@ const updateUser = async (req, res)=>{
     }
 }
 
+const uploadDp = async(req, res)=>{
+    const userId = req.params.id;
+    const exists = User.findOne({_id:userId});
+    // console.log(exis ts);
+    if(exists){
+        const updater = await exists.updateOne({$set:{
+            filename: req.file.originalname,
+            filepath: req.file.path,
+            filetype: req.file.mimetype,
+            filesize: req.file.size
+        }});
+        return res.status(200).json('Image Uploaded');
+    }
+    return res.status(404).json('User not Found');
+}
+
 const deleteUser = async(req, res)=>{
     try{
         const userId = req.params.id;
@@ -94,4 +109,5 @@ module.exports={
     deleteUser,
     getAllUser,
     getUserById,
+    uploadDp,
 }
