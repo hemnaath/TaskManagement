@@ -27,6 +27,16 @@ const signUp = async (req, res) =>{
     }
 }
 
+const getDp = async(req, res)=>{
+    const userId = req.params.id;
+    const exists = await User.findOne({_id:userId});
+    if(exists){
+        const imgLink = 'https://localhost:1111/' + exists.filepath;
+        return res.status(200).json({message:imgLink}); 
+    }
+    return res.status(404).json('User not Found');
+}
+
 const signIn = async (req, res) =>{
     const {email, password} = req.body;
     const exists = await User.findOne({email});
@@ -58,7 +68,6 @@ const updateUser = async (req, res)=>{
 const uploadDp = async(req, res)=>{
     const userId = req.params.id;
     const exists = User.findOne({_id:userId});
-    // console.log(exis ts);
     if(exists){
         const updater = await exists.updateOne({$set:{
             filename: req.file.originalname,
@@ -66,7 +75,11 @@ const uploadDp = async(req, res)=>{
             filetype: req.file.mimetype,
             filesize: req.file.size
         }});
-        return res.status(200).json('Image Uploaded');
+        if(req.file.size <= 1024 * 1024){
+            return res.status(200).json('Image Uploaded');
+        }else{
+            return res.status(400).json('Image Size too Large');
+        }
     }
     return res.status(404).json('User not Found');
 }
@@ -110,4 +123,5 @@ module.exports={
     getAllUser,
     getUserById,
     uploadDp,
+    getDp,
 }
