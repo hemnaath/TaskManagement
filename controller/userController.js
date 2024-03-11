@@ -31,7 +31,7 @@ const getDp = async(req, res)=>{
     const userId = req.params.id;
     const exists = await User.findOne({_id:userId});
     if(exists){
-        const imgLink = 'https://localhost:1111/' + exists.filepath;
+        const imgLink = 'https://localhost:1731/' + exists.filepath;
         return res.status(200).json({message:imgLink}); 
     }
     return res.status(404).json('User not Found');
