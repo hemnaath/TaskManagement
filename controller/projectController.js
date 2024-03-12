@@ -1,13 +1,13 @@
 const Project = require('../model/projectModel');
 
 const createProject = async(req, res)=>{
-    const {projectName, projectManager, projectLead, projectMembers, status, timeline, effortEstimation, effortSpent, 
+    const {projectName,   projectMembers, status, timeline, effortEstimation, effortSpent, 
     completionDate} = req.body;
     const exists = await Project.findOne({where:{projectName}});
     if(exists){
         res.status(409).json({message:'Record exists'});
     }else{
-        const creator = await Project.create({projectName, projectManager, projectLead, projectMembers, status, timeline, 
+        const creator = await Project.create({projectName,   projectMembers, status, timeline, 
         effortEstimation, effortSpent, completionDate});
         res.status(200).json({message:'Project Created', creator});
     }
@@ -32,11 +32,11 @@ const getProject = async(req, res)=>{
 
 const updateProject = async(req, res)=>{
     const projectId = req.params.id;
-    const {projectName, projectManager, projectLead, projectMembers, status, timeline, effortEstimation, effortSpent, 
+    const {projectName,   projectMembers, status, timeline, effortEstimation, effortSpent, 
         completionDate} = req.body;
     const exists = await Project.findOne({_id:projectId});
     if(exists){
-        const updater = await exists.updateOne({projectName, projectManager, projectLead, projectMembers, status, timeline, 
+        const updater = await exists.updateOne({projectName,   projectMembers, status, timeline, 
         effortEstimation, effortSpent, completionDate});
         return res.status(202).json('updated');
     }

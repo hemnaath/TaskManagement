@@ -17,7 +17,6 @@ const taskSchema = new mongoose.Schema({
     effort_estimation:{type:Number, required:true},
     effort_spent:{type:Number, required:true},
     completion_date:{type:Date, required:true},
-    SDLC_stage:{type:String, required:true},
     release_version:{type:Number, require:true}
 });
 

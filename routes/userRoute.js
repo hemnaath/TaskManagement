@@ -6,7 +6,7 @@ const {upload} = require('../helper/fileHelper');
 const router = express.Router();
 
 router.post('/createUser', userController.createUser);
-router.post('/signUp', userController.signUp);
+router.post('/register', userController.register);
 router.get('/signIn', userController.signIn);
 router.put('/updateUser/:id', userController.updateUser);
 router.delete('/deleteUser/:id', userController.deleteUser); 

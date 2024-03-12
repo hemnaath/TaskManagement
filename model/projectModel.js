@@ -3,8 +3,6 @@ const user = require('./userModel');
 
 const projectSchema = new mongoose.Schema({
   projectName: { type: String, require: true, unique: true },
-  projectManager: { type: mongoose.Schema.Types.ObjectId, ref:user, require: true },
-  projectLead: { type: mongoose.Schema.Types.ObjectId, ref:user, require: true },
   projectMembers: [{ type: mongoose.Schema.Types.ObjectId, ref: user }],
   status: { type: String, require:true },
   timeline: { type: Date, require:true },

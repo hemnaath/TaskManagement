@@ -14,10 +14,13 @@ const createUser = async(req, res)=>{
     }
 }
 
-const signUp = async (req, res) =>{
+const register = async (req, res) =>{
     const {username, password, email, role} = req.body;
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    if (!passwordRegex.test(password)) {
+        return res.status(400).json('Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.');
+    }
     const exists = await User.findOne({email});
-    console.log(exists);
     if (exists){
         return res.status(409).json('User Exists');
     }else if(!exists){
@@ -38,14 +41,12 @@ const getDp = async(req, res)=>{
 }
 
 const signIn = async (req, res) =>{
-    const {email, password} = req.body;
-    const exists = await User.findOne({email});
-    console.log(exists);
+    const {identifier, password} = req.body;
+    const exists = await User.findOne({$or:[{email:identifier}, {username:identifier}]});
     if (exists){
         const comparePassword = await compass(password, exists.password);
         if(comparePassword){
             const token = generateToken({email:exists.email});
-            console.log(token);
             return res.status(200).json({message:'User LoggedIn', token});
         }
     }
@@ -117,7 +118,7 @@ const getUserById = async(req, res)=>{
 
 module.exports={
     createUser,
-    signUp,signIn,
+    register,signIn,
     updateUser,
     deleteUser,
     getAllUser,

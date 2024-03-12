@@ -10,6 +10,7 @@ const taskRouting = require('./routes/taskRoute');
 const teamRouting = require('./routes/teamRoute');
 const logRouting = require('./routes/logRoute');
 const commentRouting = require('./routes/commentRoute');
+const orgRouting = require('./routes/orgRoute');
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use('/task', taskRouting);
 app.use('/team', teamRouting);
 app.use('/log', logRouting);
 app.use('/comment', commentRouting);
+app.use('/org', orgRouting);
 
 
 
