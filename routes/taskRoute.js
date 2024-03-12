@@ -1,9 +1,10 @@
 const express = require('express');
 const taskController = require('../controller/taskController');
+const authenticateUser = require('../middleware/auth');
 
 const router = express.Router();
 
-router.post('/createTask', taskController.createTask);
+router.post('/createTask', authenticateUser, taskController.createTask);
 router.get('/getAlltask', taskController.getAlltask);
 router.get('/getTask/:id', taskController.getTask);
 router.put('/updateTask/:id', taskController.updateTask);
