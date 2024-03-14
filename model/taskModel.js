@@ -16,9 +16,7 @@ const taskSchema = new mongoose.Schema({
     effort_estimation:{type:Number, required:true},
     description:{type:String, require:true},
     functional_doc_name:{type:String},
-    functional_doc_path:{type:String},
-    functional_doc_type:{type:String},
-    functional_doc_size:{type:String}
+    functional_doc_path:{type:String}
 });
 
 const task = mongoose.model('task', taskSchema);

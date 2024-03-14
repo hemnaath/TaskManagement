@@ -8,12 +8,12 @@ const createTask = async(req, res)=>{
         res.status(409).json({message:'Record exists'});
     }else{
         if(req.body.task_type == 'CR'){
+            console.log(req.file);
             const creator = await Task.create({user_id, team_id, project_id, task_type, reference_task_id, task_title, status, 
             priority, effort_estimation, description,
             functional_doc_name: req.file.originalname,
-            functional_doc_path: req.file.path,
-            functional_doc_type: req.file.mimetype,
-            functional_doc_size: req.file.size});
+            functional_doc_path: req.file.path
+            });
             res.status(200).json({message:'Task Created', creator});
         }else{
             const creator = await Task.create({user_id, team_id, project_id, task_type, reference_task_id, task_title, status, 
