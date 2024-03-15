@@ -15,7 +15,7 @@ const createUser = async(req, res)=>{
 }
 
 const register = async (req, res) =>{
-    const {username, password, email, role} = req.body;
+    const {username, password, email, org_id} = req.body;
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     if (!passwordRegex.test(password)) {
         return res.status(400).json('Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.');
@@ -25,7 +25,7 @@ const register = async (req, res) =>{
         return res.status(409).json('User Exists');
     }else if(!exists){
         const encryptedPassword = await passcrypt(password, 10);
-        const creator = await User.create({username, password:encryptedPassword, email, role});
+        const creator = await User.create({username, password:encryptedPassword, email, org_id});
         return res.status(201).json({message:'User Created', creator});
     }
 }
@@ -55,11 +55,11 @@ const signIn = async (req, res) =>{
 
 const updateUser = async (req, res)=>{
     const userId = req.params.id;
-    const {username, password, email, role} = req.body;
+    const {username, password, email} = req.body;
     const exists = await User.findOne({_id:userId});
     if(exists){
         const passwordhash = await passcrypt(password);
-        const updater = await exists.updateOne({$set:{username, password:passwordhash, email, role}});
+        const updater = await exists.updateOne({$set:{username, password:passwordhash, email}});
         return res.status(202).json({message:'User Updated', updater});
     }else{
         return res.json(403).json('ERR Updating User');
