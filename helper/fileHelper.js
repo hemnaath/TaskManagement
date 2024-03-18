@@ -23,4 +23,15 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
-module.exports = { upload };
+const uploadPDF = (req, res, next) => {
+    upload.single('File')(req, res, function (err) {
+        if (err instanceof multer.MulterError) {
+            return res.status(500).json(err);
+        } else if (err) {
+            return res.status(500).json(err.message || 'Unknown error occurred');
+        }
+        next();
+    });
+};
+
+module.exports = { upload, uploadPDF };

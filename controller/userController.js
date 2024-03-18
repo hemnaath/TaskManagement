@@ -66,6 +66,15 @@ const updateUser = async (req, res)=>{
     }
 }
 
+const logout = async(req,res)=>{
+    const authHeader = req.headers.authorization
+    const token = authHeader.split(' ')[1];
+    if(authHeader){
+        delete(token);
+        res.status(200).json('User LoggedOut');
+    }
+}
+
 const uploadDp = async(req, res)=>{
     const userId = req.params.id;
     const exists = User.findOne({_id:userId});
@@ -118,7 +127,7 @@ const getUserById = async(req, res)=>{
 
 module.exports={
     createUser,
-    register,signIn,
+    register,signIn,logout,
     updateUser,
     deleteUser,
     getAllUser,

@@ -6,7 +6,7 @@ const createOrg = async(req, res)=>{
     if(exists){
         return res.status(400).json(exists);
     }else{
-        const creator = Org.create({orgName, orgType});
+        const creator = await Org.create({orgName, orgType});
         res.status(200).json({message:'Org Created', creator});
     }
 }
