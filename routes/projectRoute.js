@@ -4,7 +4,7 @@ const authenticateUser = require('../middleware/auth');
 
 const router = express.Router();
 
-router.post('/createProject', projectController.createProject);
+router.post('/createProject', authenticateUser, projectController.createProject);
 router.get('/getAllProject', projectController.getAllProject);
 router.get('/getProject/:id', projectController.getProject);
 router.delete('/deleteProject/:id', projectController.deleteProject);
