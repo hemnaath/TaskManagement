@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema({
     username:{type: String, require:true, unique:true},
     password:{type:String, require:true},
     email:{type:String, require:true, unique:true},
-    org_id:{type:mongoose.Schema.Types.ObjectId, ref:'orgs'},
     filename:{type:String},
     filepath:{type:String},
     filetype:{type:String},

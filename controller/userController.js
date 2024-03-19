@@ -15,7 +15,7 @@ const createUser = async(req, res)=>{
 }
 
 const register = async (req, res) =>{
-    const {username, password, email, org_id} = req.body;
+    const {name, username, password, email} = req.body;
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     if (!passwordRegex.test(password)) {
         return res.status(400).json('Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.');
@@ -25,7 +25,7 @@ const register = async (req, res) =>{
         return res.status(409).json('User Exists');
     }else if(!exists){
         const encryptedPassword = await passcrypt(password, 10);
-        const creator = await User.create({username, password:encryptedPassword, email, org_id});
+        const creator = await User.create({name, username, password:encryptedPassword, email});
         return res.status(201).json({message:'User Created', creator});
     }
 }
