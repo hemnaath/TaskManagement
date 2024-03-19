@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
-const db = require('./config/mongoConnector');
+const cors = require('cors');
+require('./config/mongoConnector');
 const session = require('express-session');
 const passport = require('./helper/authHelper');
 const authRouter = require('./routes/authRoute');
@@ -8,8 +9,6 @@ const userRouting = require('./routes/userRoute');
 const projectRouting = require('./routes/projectRoute');
 const taskRouting = require('./routes/taskRoute');
 const teamRouting = require('./routes/teamRoute');
-const logRouting = require('./routes/logRoute');
-const commentRouting = require('./routes/commentRoute');
 const orgRouting = require('./routes/orgRoute');
 
 const app = express();
@@ -25,6 +24,7 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(cors());
 
 
 app.use('/auth', authRouter);
@@ -32,8 +32,6 @@ app.use('/user', userRouting);
 app.use('/project', projectRouting);
 app.use('/task', taskRouting);
 app.use('/team', teamRouting);
-app.use('/log', logRouting);
-app.use('/comment', commentRouting);
 app.use('/org', orgRouting);
 
 

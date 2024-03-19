@@ -6,10 +6,5 @@ const fileHelper = require('../helper/fileHelper');
 const router = express.Router();
 
 router.post('/createTask', authenticateUser, fileHelper.uploadPDF, taskController.createTask);
-router.get('/getAlltask', taskController.getAlltask);
-router.get('/getTask/:id', taskController.getTask);
-router.put('/updateTask/:id', taskController.updateTask);
-router.delete('/deleteTask/:id', taskController.deleteTask);
-
 
 module.exports = router;
