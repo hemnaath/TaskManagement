@@ -35,7 +35,7 @@ const signIn = async (req, res) =>{
         const comparePassword = await compass(password, exists.password);
         if(comparePassword){
             const token = generateToken({email:exists.email});
-            return res.status(200).json({message:'User LoggedIn', token});
+            return res.status(200).json({token, username:exists.username});
         }
     }
     return res.status(404).json('User Not Found');
