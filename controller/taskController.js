@@ -24,8 +24,21 @@ const createTask = async(req, res)=>{
     }
 }
 
+const getTaskByTeam = async(req, res)=>{
+    const teams = req.params.id;
+    const exists = await Task.find({team_id:teams});
+    if(exists.length > 0){
+        const taskData = exists.map(task =>({
+            task_number:task.task_number,
+            task_title:task.task_title
+        }));
+        return res.status(200).json(taskData);
+    }
+}
+
 
 
 module.exports={
     createTask,
+    getTaskByTeam,
 }

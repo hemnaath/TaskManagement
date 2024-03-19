@@ -28,7 +28,7 @@ const getDp = async(req, res)=>{
     return res.status(404).json('User not Found');
 }
 
-const signIn = async (req, res) =>{
+const login = async (req, res) =>{
     const {identifier, password} = req.body;
     const exists = await User.findOne({$or:[{email:identifier}, {username:identifier}]});
     if (exists){
@@ -71,7 +71,7 @@ const uploadDp = async(req, res)=>{
 
 
 module.exports={
-    register,signIn,logout,
+    register,login,logout,
     uploadDp,
     getDp,
 }

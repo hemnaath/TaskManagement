@@ -1,10 +1,12 @@
 const mongoose = require('mongoose');
+const autoIncrement = require('mongoose-sequence');
 const user = require('./userModel');
 const team = require('./teamModel');
 const project = require('./projectModel');
 
 const taskSchema = new mongoose.Schema({
-    task_number:{type:String},
+    // task_number: { type: Number, required: true, unique: true },
+    // task_number:{type:String},
     user_id:{type: mongoose.Schema.Types.ObjectId, ref:user, required:true},
     team_id:{type: mongoose.Schema.Types.ObjectId, ref:team, required:true},
     project_id:{type: mongoose.Schema.Types.ObjectId, ref:project, required:true},
@@ -18,6 +20,8 @@ const taskSchema = new mongoose.Schema({
     functional_doc_name:{type:String, default:null},
     functional_doc_path:{type:String, default:null}
 });
+
+taskSchema.plugin(autoIncrement(mongoose), {inc_field:'task_number'});
 
 const task = mongoose.model('task', taskSchema);
 
