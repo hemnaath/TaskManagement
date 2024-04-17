@@ -68,7 +68,7 @@ const login = async (req, res) =>{
         if(values.length > 0){
             const comparePassword = await compass(password, values[0].password);
             if(comparePassword){
-                token = generateToken({email:values[0].email, id:values[0].id});
+                token = generateToken({email:values[0].email, id:values[0].id, orgId:values[0].orgId});
                 if(values[0].orgId != null){
                     orgFlag = true;
                 }

@@ -42,3 +42,79 @@ http://localhost:1731/comment/delete/:id (DELETE)(comment_id) //Delete Comment
 11.Task
 12.Comments
 13.Pagination
+
+# SQL
+
+CREATE DATABASE TaskManagement;
+CREATE TABLE org (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    orgName VARCHAR(255) NOT NULL,
+    orgType VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+CREATE TABLE project (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    projectName VARCHAR(255) NOT NULL,
+    createdBy INT NOT NULL,
+    orgId INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE(projectName)
+);
+CREATE TABLE user (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    role VARCHAR(255) NOT NULL,
+    orgId INT,
+    filename VARCHAR(255),
+    filepath VARCHAR(255),
+    filetype VARCHAR(255),
+    filesize VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE(username),
+    UNIQUE(email)
+);
+CREATE TABLE otp (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    otp INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+CREATE TABLE ip (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ipAddress VARCHAR(255) NOT NULL,
+    userId INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+CREATE TABLE task (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description VARCHAR(255),
+    notes VARCHAR(255),
+    assigne INT,
+    status VARCHAR(255),
+    createdBy INT,
+    priority VARCHAR(255),
+    releaseVersion VARCHAR(255),
+	startDate TIMESTAMP,
+    effortEstimation INT,
+    taskNo VARCHAR(255),
+    taskType VARCHAR(255),
+    projectId INT,
+    filename VARCHAR(255),
+    filepath VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+CREATE TABLE comment (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    comment VARCHAR(255),
+    userId INT,
+    taskId INT
+);
