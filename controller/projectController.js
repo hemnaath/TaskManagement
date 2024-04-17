@@ -51,8 +51,20 @@ const deleteProject = (req, res)=>{
     });
 }
 
+const getProjectById = (req, res)=>{
+    const projectId = req.params.id;
+    const projectGetterSql = `SELECT * FROM project WHERE id = ?`;
+    db.query(projectGetterSql, [projectId], (err, val)=>{
+        if(val.length > 0){
+            return res.status(200).json(val);
+        }else{
+            return res.status(404).json('No Projects Found');
+        }
+    })
+}
+
 
 
 module.exports={
-    createProject,getAllProjects,updateProject, deleteProject,
+    createProject,getAllProjects,updateProject, deleteProject,getProjectById,
 }
