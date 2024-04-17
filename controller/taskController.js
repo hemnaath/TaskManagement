@@ -68,8 +68,25 @@ const deleteTask = (req, res)=>{
     })
 }
 
+const taskPagination = (req, res)=>{
+    const {page, limit} = req.body;
+    const offset = (page - 1) * limit;
+    const paginationSql = `SELECT * FROM task limit ? offset ?`;
+    db.query(paginationSql, [limit, offset], (err, val)=>{
+        const totalDataSql = `SELECT COUNT(*) AS count FROM task`;
+        db.query(totalDataSql, null, (err, vals)=>{
+            const totalPages = Math.ceil(vals[0].count/limit);
+            const endIndex = (page * limit);
+            const startIndex = endIndex - ((limit - 10) + 9);
+            const displayData = [{'startIndex':startIndex, 'endIndex':endIndex}];
+            return res.status(200).json({val, totalPages, limit, page, 'totalData':vals[0].count, 'displayData':displayData});
+        })
+    });
+}
+
 module.exports={
     createTask,
     updateTask,
     deleteTask,
+    taskPagination,
 }

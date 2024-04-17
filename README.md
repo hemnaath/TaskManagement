@@ -20,6 +20,7 @@ http://localhost:1731/project/delete/:id (DELETE)(project_id) //Delete Project
 http://localhost:1731/task/create/:id (POST)(project_id) //Create Task
 http://localhost:1731/task/update/:id (PUT)(task_id) //Update Task
 http://localhost:1731/task/delete/:id (DELETE)(task_id) //Delete Task
+http://localhost:1731/task/task-pagination (GET) //Pagination
 
 http://localhost:1731/comment/create/:id (POST)(task_id) //Create Comment
 http://localhost:1731/comment/update/:id (PUT)(comment_id) //Update Comment
@@ -40,3 +41,4 @@ http://localhost:1731/comment/delete/:id (DELETE)(comment_id) //Delete Comment
 10.IP Recording
 11.Task
 12.Comments
+13.Pagination

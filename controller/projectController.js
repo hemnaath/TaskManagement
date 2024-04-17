@@ -16,7 +16,7 @@ const createProject = async(req, res)=>{
 }
 
 const getAllProjects = async(req, res) => {
-    const finderSql = `SELECT projectName FROM project`;
+    const finderSql = `SELECT id, projectName FROM project`;
     db.query(finderSql, null, (err, val)=>{
         if(val.length > 0){
             return res.status(200).json(val);
