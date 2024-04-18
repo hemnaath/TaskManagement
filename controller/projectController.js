@@ -8,9 +8,12 @@ const createProject = async(req, res)=>{
         if(exists.length > 0){
             return res.status(409).json({message:'Record exists'});
         }else{
-            const creatorSql = `INSERT INTO project (projectName, createdBy, orgId) VALUES (?,?,?)`;
-            db.query(creatorSql, [projectName, res.locals.id, res.locals.orgId]);
-            return res.status(200).json({message:'Project Created'});
+            const orgIdFinderSql = `SELECT orgId FROM user WHERE id = ?`;
+            db.query(orgIdFinderSql, [res.locals.id], (err, val)=>{
+                const creatorSql = `INSERT INTO project (projectName, createdBy, orgId) VALUES (?,?,?)`;
+                db.query(creatorSql, [projectName, res.locals.id, val[0].orgId]);
+                return res.status(200).json({message:'Project Created'});
+            })
         }
     });
 }
