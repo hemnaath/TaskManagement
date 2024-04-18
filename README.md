@@ -16,6 +16,7 @@ http://localhost:1731/project/create (POST) //Create Project
 http://localhost:1731/project/get-all (GET) //Get All Projects
 http://localhost:1731/project/update/:id (PUT)(project_id) //Update Project
 http://localhost:1731/project/delete/:id (DELETE)(project_id) //Delete Project
+http://localhost:1731/project/get-project/:id (GET)(project_id) //Get Project By Id
 
 http://localhost:1731/task/create/:id (POST)(project_id) //Create Task
 http://localhost:1731/task/update/:id (PUT)(task_id) //Update Task
