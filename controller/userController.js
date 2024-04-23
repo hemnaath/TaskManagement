@@ -133,6 +133,8 @@ const login = async (req, res) =>{
                             });
                         }
                     }
+                }else{
+                    return res.status(404).json('User Not Found');  
                 }
             }else{
                 return res.status(404).json('User Not Found');  
