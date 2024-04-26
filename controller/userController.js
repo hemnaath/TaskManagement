@@ -90,6 +90,8 @@ const login = async (req, res) =>{
                         const ipFinderSql = `SELECT * FROM ip WHERE ipAddress = ? AND userId = ?`;
                         db.query(ipFinderSql, [ipAddr, values[0].id], (err, ipExists)=>{
                             if(ipExists.length > 0){
+                                const inTimeSql = `insert into timesheet (date, createdBy, workedHrs) values (curdate(), ?, timediff(now(), now()))`;
+                                db.query(inTimeSql, [values[0].id]);
                                 return res.status(200).json({token, username:values[0].username, isOrgId:orgFlag, isVerificationRequired:verifyFlag});
                             }else{
                                 const otpGenerator = (Math.floor(100000 + Math.random() * 900000)).toString();
@@ -97,6 +99,8 @@ const login = async (req, res) =>{
                                 const otpCreateSql = `INSERT INTO otp (otp) VALUES (?)`;
                                 db.query(otpCreateSql, [otpGenerator]);
                                 verifyFlag = true;
+                                const inTimeSql = `insert into timesheet (date, createdBy, workedHrs) values (curdate(), ?, timediff(now(), now()))`;
+                                db.query(inTimeSql, [values[0].id]);
                                 return res.status(200).json({token, username:values[0].username, isOrgId:orgFlag, isVerificationRequired:verifyFlag});
                             }
                         });
@@ -106,6 +110,8 @@ const login = async (req, res) =>{
                             const ipFinderSql = `SELECT * FROM ip WHERE ipAddress = ? AND userId = ?`;
                             db.query(ipFinderSql, [ipAddr, values[0].id], (err, ipExists)=>{
                                 if(ipExists.length > 0){
+                                    const inTimeSql = `insert into timesheet (date, createdBy, workedHrs) values (curdate(), ?, timediff(now(), now()))`;
+                                    db.query(inTimeSql, [values[0].id]);
                                     return res.status(200).json({token, username:values[0].username, isOrgId:orgFlag, isVerificationRequired:verifyFlag});
                                 }else{
                                     const otpGenerator = (Math.floor(100000 + Math.random() * 900000)).toString();
@@ -113,6 +119,8 @@ const login = async (req, res) =>{
                                     const otpCreateSql = `INSERT INTO otp (otp) VALUES (?)`;
                                     db.query(otpCreateSql, [otpGenerator]);
                                     verifyFlag = true;
+                                    const inTimeSql = `insert into timesheet (date, createdBy, workedHrs) values (curdate(), ?, timediff(now(), now()))`;
+                                    db.query(inTimeSql, [values[0].id]);
                                     return res.status(200).json({token, username:values[0].username, isOrgId:orgFlag, isVerificationRequired:verifyFlag});
                                 }
                             });
@@ -121,6 +129,8 @@ const login = async (req, res) =>{
                             const ipFinderSql = `SELECT * FROM ip WHERE ipAddress = ? AND userId = ?`;
                             db.query(ipFinderSql, [ipAddr, values[0].id], (err, ipExists)=>{
                                 if(ipExists.length > 0){
+                                    const inTimeSql = `insert into timesheet (date, createdBy, workedHrs) values (curdate(), ?, timediff(now(), now()))`;
+                                    db.query(inTimeSql, [values[0].id]);
                                     return res.status(200).json({token, username:values[0].username, isOrgId:orgFlag, isVerificationRequired:verifyFlag});
                                 }else{
                                     const otpGenerator = (Math.floor(100000 + Math.random() * 900000)).toString();
@@ -128,6 +138,8 @@ const login = async (req, res) =>{
                                     const otpCreateSql = `INSERT INTO otp (otp) VALUES (?)`;
                                     db.query(otpCreateSql, [otpGenerator]);
                                     verifyFlag = true;
+                                    const inTimeSql = `insert into timesheet (date, createdBy, workedHrs) values (curdate(), ?, timediff(now(), now()))`;
+                                    db.query(inTimeSql, [values[0].id]);
                                     return res.status(200).json({token, username:values[0].username, isOrgId:orgFlag, isVerificationRequired:verifyFlag});
                                 }
                             });
@@ -177,6 +189,8 @@ const verifyOtp = async (req, res) =>{
 
 const logout = async(req,res)=>{
     try{
+        const outTimeSql = `update timesheet set outTime = CURRENT_TIMESTAMP, workedHrs = timediff(now(), inTime) where date = curdate() and createdBy = ?`;
+        db.query(outTimeSql, [res.locals.id]);
         const authHeader = req.headers.authorization
         const token = authHeader.split(' ')[1];
         if(authHeader){
