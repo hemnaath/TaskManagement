@@ -1,28 +1,30 @@
+const User = require('../model/userModel');
 const {passcrypt, compass} = require('../helper/passwordHelper');
 const {generateToken} = require('../helper/tokenHelper');
 const emailHelper = require('../helper/emailHelper');
+const Otp = require('../model/otpModel');
 const os = require('os');
-const db = require('../config/sqlConnector');
+const Ip = require('../model/ipModel');
+const Timesheet = require('../model/timesheetModel');
+
+let globalUserId = null;
 
 
 const register = async (req, res) =>{
     const {name, username, password, email} = req.body;
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     try{
-        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
         if (!passwordRegex.test(password)) {
             return res.status(400).json('Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.');
         }
-        const finder = `SELECT id FROM user WHERE email = ?`;
-        db.query(finder, [email], async(err, exists)=>{
-            if (exists.length>0){
-                return res.status(409).json('User Exists');
-            }else {
-                const encryptedPassword = await passcrypt(password, 10);
-                const creatorSql = `INSERT INTO user (name, username, password, email, role) VALUES (?,?,?,?,'admin')`;
-                db.query(creatorSql, [name, username, encryptedPassword, email]);
-                return res.status(201).json({message:'User Created'});
-            }
-        });
+        const exists = await User.findOne({email});
+        if (exists){
+            return res.status(409).json('User Exists');
+        }else if(!exists){
+            const encryptedPassword = await passcrypt(password, 10);
+            const creator = await User.create({name, username, password:encryptedPassword, email, role:'admin'});
+            return res.status(201).json({message:'User Created', creator});
+        }
     }catch(error){
         return res.status(500).json('Internal Server Error');
     }
@@ -30,176 +32,130 @@ const register = async (req, res) =>{
 
 const inviteUser = async(req, res)=>{
     const {name, username, password, email} = req.body;
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     try{
-        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
         if (!passwordRegex.test(password)) {
             return res.status(400).json('Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.');
         }
-        const finder = `SELECT id FROM user WHERE email = ?`;
-        db.query(finder, [email], async(err, exists)=>{
-            if (exists.length > 0){
-                return res.status(409).json('User Exists');
-            }else {
-                const encryptedPassword = await passcrypt(password, 10);
-                const userId = res.locals.id;
-                const findOrgSql = `SELECT orgId FROM user WHERE id = ?`;
-                const finder = db.query(findOrgSql, [userId]);
-                const creatorSql = `INSERT INTO user (name, username, password, email, orgId, role) VALUES (?,?,?,?,?,'editor')`;
-                db.query(creatorSql, [name, username, encryptedPassword, email, finder]);
-                return res.status(201).json({message:'User Created', creator});
-            }
-        });
+        const exists = await User.findOne({email});
+        if (exists){
+            return res.status(409).json('User Exists');
+        }else {
+            const encryptedPassword = await passcrypt(password, 10);
+            const findOrg = await User.findOne({_id:res.locals.id});
+            const creator = await User.create({name, username, password:encryptedPassword, email, org_id:findOrg.org_id, role:'editor'});
+            return res.status(201).json({message:'User Created', creator});
+        }
     }catch(error){
         return res.status(500).json('Internal Server Error');
     }
 }
 
 const getDp = async(req, res)=>{
-    const userId = req.params.id;
     try{
-        const finderSql = `SELECT id FROM user WHERE id = ?`;
-        db.query(finderSql, [userId], (err, exists)=>{
-            if(exists){
-                const imgLink = 'https://localhost:1731/' + exists.filepath;
-                return res.status(200).json({message:imgLink}); 
-            }
-            return res.status(404).json('User not Found');
-        });
+        const userId = res.locals.id;
+        const exists = await User.findOne({_id:userId});
+        if(exists){
+            const imgLink = 'https://localhost:1731/' + exists.filepath;
+            return res.status(200).json({message:imgLink}); 
+        }
+        return res.status(404).json('User not Found');
     }catch(error){
         return res.status(500).json('Internal Server Error');
     }
 }
 
-const login = async (req, res) =>{  
-    const {identifier, password} = req.body;
-    try{
-        let token=null; let ipAddr =null;
-        let orgFlag = false; 
+const login = async (req, res) => {
+    const { identifier, password } = req.body;
+    try {
+        let token, ipAddr, ipExists, timesheetExists = null;
+        let orgFlag = false;
         let verifyFlag = false;
-        const finderSql = `SELECT * FROM user WHERE email = ? OR username = ?`;
-        db.query(finderSql, [identifier, identifier], async (err, values)=>{
-            if(values.length > 0){
-                const comparePassword = await compass(password, values[0].password);
-                if(comparePassword){
-                    token = generateToken({email:values[0].email, id:values[0].id, orgId:values[0].orgId});
-                    if(values[0].orgId != null){
-                        orgFlag = true;
-                    }
-                    if(os.type() == 'Darwin'){
-                        ipAddr = os.networkInterfaces().en0.filter((e) => e.family === 'IPv4')[0].address;
-                        const ipFinderSql = `SELECT * FROM ip WHERE ipAddress = ? AND userId = ?`;
-                        db.query(ipFinderSql, [ipAddr, values[0].id], (err, ipExists)=>{
-                            if(ipExists.length > 0){
-                                const inTimeSql = `insert into timesheet (date, createdBy, workedHrs) values (curdate(), ?, timediff(now(), now()))`;
-                                db.query(inTimeSql, [values[0].id]);
-                                return res.status(200).json({token, username:values[0].username, isOrgId:orgFlag, isVerificationRequired:verifyFlag});
-                            }else{
-                                const otpGenerator = (Math.floor(100000 + Math.random() * 900000)).toString();
-                                emailHelper.otpMail(values[0].email, otpGenerator);
-                                const otpCreateSql = `INSERT INTO otp (otp) VALUES (?)`;
-                                db.query(otpCreateSql, [otpGenerator]);
-                                verifyFlag = true;
-                                const inTimeSql = `insert into timesheet (date, createdBy, workedHrs) values (curdate(), ?, timediff(now(), now()))`;
-                                db.query(inTimeSql, [values[0].id]);
-                                return res.status(200).json({token, username:values[0].username, isOrgId:orgFlag, isVerificationRequired:verifyFlag});
-                            }
-                        });
-                    }if(os.type() == 'Windows_NT'){
-                        if(os.networkInterfaces().Ethernet != null){
-                            ipAddr = os.networkInterfaces().Ethernet.filter((e) => e.family === 'IPv4')[0].address;
-                            const ipFinderSql = `SELECT * FROM ip WHERE ipAddress = ? AND userId = ?`;
-                            db.query(ipFinderSql, [ipAddr, values[0].id], (err, ipExists)=>{
-                                if(ipExists.length > 0){
-                                    const inTimeSql = `insert into timesheet (date, createdBy, workedHrs) values (curdate(), ?, timediff(now(), now()))`;
-                                    db.query(inTimeSql, [values[0].id]);
-                                    return res.status(200).json({token, username:values[0].username, isOrgId:orgFlag, isVerificationRequired:verifyFlag});
-                                }else{
-                                    const otpGenerator = (Math.floor(100000 + Math.random() * 900000)).toString();
-                                    emailHelper.otpMail(values[0].email, otpGenerator);
-                                    const otpCreateSql = `INSERT INTO otp (otp) VALUES (?)`;
-                                    db.query(otpCreateSql, [otpGenerator]);
-                                    verifyFlag = true;
-                                    const inTimeSql = `insert into timesheet (date, createdBy, workedHrs) values (curdate(), ?, timediff(now(), now()))`;
-                                    db.query(inTimeSql, [values[0].id]);
-                                    return res.status(200).json({token, username:values[0].username, isOrgId:orgFlag, isVerificationRequired:verifyFlag});
-                                }
-                            });
-                        }else{
-                            ipAddr = os.networkInterfaces()['Wi-Fi'].filter((e) => e.family === 'IPv4')[0].address;
-                            const ipFinderSql = `SELECT * FROM ip WHERE ipAddress = ? AND userId = ?`;
-                            db.query(ipFinderSql, [ipAddr, values[0].id], (err, ipExists)=>{
-                                if(ipExists.length > 0){
-                                    const inTimeSql = `insert into timesheet (date, createdBy, workedHrs) values (curdate(), ?, timediff(now(), now()))`;
-                                    db.query(inTimeSql, [values[0].id]);
-                                    return res.status(200).json({token, username:values[0].username, isOrgId:orgFlag, isVerificationRequired:verifyFlag});
-                                }else{
-                                    const otpGenerator = (Math.floor(100000 + Math.random() * 900000)).toString();
-                                    emailHelper.otpMail(values[0].email, otpGenerator);
-                                    const otpCreateSql = `INSERT INTO otp (otp) VALUES (?)`;
-                                    db.query(otpCreateSql, [otpGenerator]);
-                                    verifyFlag = true;
-                                    const inTimeSql = `insert into timesheet (date, createdBy, workedHrs) values (curdate(), ?, timediff(now(), now()))`;
-                                    db.query(inTimeSql, [values[0].id]);
-                                    return res.status(200).json({token, username:values[0].username, isOrgId:orgFlag, isVerificationRequired:verifyFlag});
-                                }
-                            });
-                        }
-                    }
-                }else{
-                    return res.status(404).json('User Not Found');  
+        const exists = await User.findOne({ $or: [{ email: identifier }, { username: identifier }] });
+        if (exists) {
+            const comparePassword = await compass(password, exists.password);
+            if (comparePassword) {
+                token = generateToken({ email: exists.email, id: exists._id });
+                if (exists.orgId) {
+                    orgFlag = true;
                 }
-            }else{
-                return res.status(404).json('User Not Found');  
-            } 
-        });
-    }catch(error){
+                if (os.type() === 'Darwin') {
+                    ipAddr = os.networkInterfaces().en0.find(e => e.family === 'IPv4').address;
+                } else if (os.type() === 'Windows_NT') {
+                    ipAddr = os.networkInterfaces().Ethernet ? os.networkInterfaces().Ethernet.find(e => e.family === 'IPv4').address :
+                    os.networkInterfaces()['Wi-Fi'].find(e => e.family === 'IPv4').address;
+                }
+                const timezone = { hour12: false, timeZone: 'Asia/Kolkata' };
+                const currentDate = new Date().toLocaleDateString();
+                const currentTime = new Date().toLocaleTimeString('en-IN', timezone);
+                ipExists = await Ip.findOne({ ip_address: ipAddr, user_id: exists._id });
+                timesheetExists = await Timesheet.findOne({$and:[{date:currentDate}, {user_id:exists._id}]});
+                if(timesheetExists == null || timesheetExists == undefined){
+                    if (ipExists) {
+                        await Timesheet.create({ date: currentDate, user_id: exists._id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
+                    } else {
+                        const otp = (Math.floor(100000 + Math.random() * 900000)).toString();
+                        emailHelper.otpMail(exists.email, otp);
+                        await Otp.create({ otp });
+                        verifyFlag = true;
+                        await Timesheet.create({ date: currentDate, user_id: exists._id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
+                    }
+                }
+                return res.status(200).json({ token, username: exists.username, isOrgId: orgFlag, isVerificationRequired: verifyFlag });
+            }
+        }
+
+        return res.status(404).json('User Not Found');
+    } catch (error) {
+        console.error(error);
         return res.status(500).json('Internal Server Error');
     }
 }
 
 const verifyOtp = async (req, res) =>{
-    let ipAddr, ipExists = null;
     const {otp} = req.body;
     try{
-        const finderSql = `SELECT otp FROM otp WHERE otp = ?`;
-        db.query(finderSql, [otp], (err, values)=>{
-            if(values.length > 0){
-                if(os.type() == 'Darwin'){
-                    ipAddr = os.networkInterfaces().en0.filter((e) => e.family === 'IPv4')[0].address;
-                }if(os.type() == 'Windows_NT'){
-                    if(os.networkInterfaces().Ethernet != null){
-                        ipAddr = os.networkInterfaces().Ethernet.filter((e) => e.family === 'IPv4')[0].address;
-                    }else{
-                        ipAddr = os.networkInterfaces()['Wi-Fi'].filter((e) => e.family === 'IPv4')[0].address;
-                    }
+        let ipAddr, ipExists = null;
+        const exists = await Otp.findOne({otp:otp});
+        if(exists){
+            if(os.type() == 'Darwin'){
+                ipAddr = os.networkInterfaces().en0.filter((e) => e.family === 'IPv4')[0].address;
+                ipExists = await Ip.findOne({$and:[{ip_address:ipAddr}, {user_id:res.locals.id}]});
+            }if(os.type() == 'Windows_NT'){
+                if(os.networkInterfaces().Ethernet != null){
+                    ipAddr = os.networkInterfaces().Ethernet.filter((e) => e.family === 'IPv4')[0].address;
+                    ipExists = await Ip.findOne({$and:[{ip_address:ipAddr}, {user_id:exists._id}]});
+                }else{
+                    ipAddr = os.networkInterfaces()['Wi-Fi'].filter((e) => e.family === 'IPv4')[0].address;
+                    ipExists = await Ip.findOne({$and:[{ip_address:ipAddr}, {user_id:exists._id}]});
                 }
-                const ipCreatorSql = `INSERT INTO ip (ipAddress, userId) VALUES (?,?)`;
-                db.query(ipCreatorSql, [ipAddr, res.locals.id]);
-                const ipDeleteSql = `TRUNCATE TABLE otp`;
-                db.query(ipDeleteSql);
-                return res.status(200).json('OTP Verified');
-            }else{
-                return res.status(400).json('Invalid OTP');
             }
-        });
+            await Ip.create({ip_address:ipAddr, user_id:res.locals.id});
+            await Otp.deleteMany();
+            return res.status(200).json('OTP Verified');
+        }else{
+            return res.status(400).json('Invalid OTP');
+        }
     }catch(error){
         return res.status(500).json('Internal Server Error');
     }
+    
 }
 
-const logout = async(req,res)=>{
-    try{
-        const outTimeSql = `update timesheet set outTime = CURRENT_TIMESTAMP, workedHrs = timediff(now(), inTime) where date = curdate() and createdBy = ?`;
-        db.query(outTimeSql, [res.locals.id]);
-        const authHeader = req.headers.authorization
-        const token = authHeader.split(' ')[1];
-        if(authHeader){
-            delete(token);
+const logout = async (req, res) => {
+    try {
+        globalUserId = res.locals.id;
+        const authHeader = req.headers.authorization;
+        if (authHeader) {
+            const exists = await Timesheet.findOne({ user_id: res.locals.id, date: new Date().toLocaleDateString()});
+            if (exists) {
+                const currentTime = new Date().toLocaleTimeString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata' });
+                await exists.updateOne({$set:{out_time:currentTime}});
+            }
             res.status(200).json('User LoggedOut');
-        }else{
-            return res.status(400).json("User Not LoggedIn");
         }
-    }catch(error){
+        await tsWorkedHrs(res.locals.id);
+    } catch (error) {
         return res.status(500).json('Internal Server Error');
     }
 }
@@ -207,23 +163,53 @@ const logout = async(req,res)=>{
 const uploadDp = async(req, res)=>{
     const userId = res.locals.id;
     try{
-        const finderSql = `SELECT id FROM user WHERE id = ?`;
-        db.query(finderSql, [userId], (err, exists)=>{
-            if(exists.length > 0){
-                if(req.file.size <= 1024 * 1024){
-                    const updaterSql = `UPDATE user SET filename = ?, filepath = ?, filetype = ?, filesize = ? WHERE id = ?`;
-                    db.query(updaterSql, [req.file.originalname, req.file.path, req.file.mimetype, req.file.size]);
-                    return res.status(200).json('Image Uploaded');
-                }else{
-                    return res.status(400).json('Image Size too Large');
-                }
+        const exists = User.findOne({_id:userId});
+        if(exists){
+            const updater = await exists.updateOne({$set:{
+                filename: req.file.originalname,
+                filepath: req.file.path,
+                filetype: req.file.mimetype,
+                filesize: req.file.size
+            }});
+            if(req.file.size <= 1024 * 1024){
+                return res.status(200).json('Image Uploaded');
+            }else{
+                return res.status(400).json('Image Size too Large');
             }
-            return res.status(404).json('User not Found');
-        });
+        }
+        return res.status(404).json('User not Found');
     }catch(error){
         return res.status(500).json('Internal Server Error');
     }
 }
+
+async function tsWorkedHrs(id) {
+    const exists = await Timesheet.findOne({ user_id: id, date: new Date().toLocaleDateString() });
+    if (exists) {
+        const outTime = exists.out_time.split(':');
+        const inTime = exists.in_time.split(':');
+        let outTimeHrs = (outTime[0]);
+        let outTimeMin = (outTime[1]);
+        let inTimeHrs = (inTime[0]);
+        let inTimeMin = (inTime[1]);
+        
+        let hrs = outTimeHrs - inTimeHrs;
+        let min = outTimeMin - inTimeMin;
+        
+        if (min < 0) {
+            min += 60;
+            hrs -= 1;
+        }
+        
+        let timeDiff = hrs + ':' + min;
+        
+        await exists.updateOne({ $set: { worked_hours: timeDiff } });
+        console.log(timeDiff);
+    }
+}
+
+// setInterval(() => tsWorkedHrs(globalUserId), 1 * 60 * 1000);
+
 
 
 module.exports={
