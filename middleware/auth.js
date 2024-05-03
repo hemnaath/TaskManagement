@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');;
 require('dotenv').config();
+const User = require('../model/userModel');
 
-const authenticateUser = (req, res, next) => {
+const authenticateUser = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     
     if (!authHeader) {
@@ -9,13 +10,13 @@ const authenticateUser = (req, res, next) => {
     }
     const token = authHeader.split(' ')[1];    
     try {
-        const decoded = jwt.verify(token, process.env.SECRET_KEY);
+        const decoded = jwt.verify(token, process.env.SECRET_KEY);        
         res.locals.id = decoded.payload.id;
-        res.locals.orgId = decoded.payload.orgId;
+        res.locals.role = decoded.payload.role;
         next();
     } catch (error) {
         return res.status(401).json({ message: 'Unauthorized: Invalid token' });
     }
-};
+}
 
 module.exports = authenticateUser;

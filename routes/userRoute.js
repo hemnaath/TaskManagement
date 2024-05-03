@@ -10,7 +10,12 @@ router.post('/login', userController.login);
 router.post('/dp-upload', authenticateUser, upload.single('File'), userController.uploadDp);
 router.get('/get-dp', authenticateUser, userController.getDp);
 router.post('/logout', authenticateUser, userController.logout);
-router.post('/invite', authenticateUser, userController.inviteUser);
+router.post('/invite', authenticateUser, (req, res, next)=>{
+    if(res.locals.role !== 'admin'){
+        return res.status(403).json('Unauthorized Access');
+    }
+    next();
+}, userController.inviteUser);
 router.post('/verify-otp', authenticateUser, userController.verifyOtp);
 
 
