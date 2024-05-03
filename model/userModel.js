@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
     email:{type:String, require:true, unique:true},
     role:{type:String, require:true},
     org_id:{type:mongoose.Schema.Types.ObjectId},
+    reporting_person:{type:mongoose.Schema.Types.ObjectId},
     filename:{type:String},
     filepath:{type:String},
     filetype:{type:String},

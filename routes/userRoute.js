@@ -17,6 +17,12 @@ router.post('/invite', authenticateUser, (req, res, next)=>{
     next();
 }, userController.inviteUser);
 router.post('/verify-otp', authenticateUser, userController.verifyOtp);
+router.get('/assign-reporting-person', authenticateUser, (req, res, next)=>{
+    if(res.locals.role !== 'admin'){
+        return res.status(403).json('Unauthorized Access');
+    }
+    next();
+}, userController.assignReportingPerson);
 
 
 module.exports = router;

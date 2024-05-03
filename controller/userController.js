@@ -208,8 +208,16 @@ async function tsWorkedHrs(id) {
     }
 }
 
-// setInterval(() => tsWorkedHrs(globalUserId), 1 * 60 * 1000);
-
+const assignReportingPerson = async(req, res)=>{
+    const {username, reportingPerson} = req.body;
+    try{
+        const findReportingPerson = await User.findOne({username:reportingPerson});
+        await User.updateMany({username:username},{reporting_person:findReportingPerson._id});
+        return res.status(301).json('Reporting Persons assigned');
+    }catch(error){
+        return res.status(500).json('Internal Server Error');
+    }
+}
 
 
 module.exports={
@@ -217,4 +225,5 @@ module.exports={
     uploadDp,
     getDp,
     inviteUser,verifyOtp,
+    assignReportingPerson,
 }
