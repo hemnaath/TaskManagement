@@ -23,6 +23,9 @@ const register = async (req, res) =>{
         }else if(!exists){
             const encryptedPassword = await passcrypt(password, 10);
             const creator = await User.create({name, username, password:encryptedPassword, email, role:'admin'});
+            const token = generateToken({name:name, username:username, email:email});
+            const url = 'http://localhost:1731/accounts/verification?token='+token;
+            emailHelper.verificationEmail(email, url);
             return res.status(201).json({message:'User Created', creator});
         }
     }catch(error){
