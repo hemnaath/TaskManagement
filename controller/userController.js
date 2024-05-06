@@ -21,13 +21,40 @@ const register = async (req, res) =>{
         if (exists){
             return res.status(409).json('User Exists');
         }else if(!exists){
-            const encryptedPassword = await passcrypt(password, 10);
+            const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
             const creator = await User.create({name, username, password:encryptedPassword, email, role:'admin'});
             const token = generateToken({name:name, username:username, email:email});
             const url = 'http://localhost:1731/accounts/verification?token='+token;
             emailHelper.verificationEmail(email, url);
             return res.status(201).json({message:'User Created', creator});
         }
+    }catch(error){
+        return res.status(500).json('Internal Server Error');
+    }
+}
+
+const forgetPassword = async(req, res)=>{
+    const {email} = req.body;
+    try{
+        const token = generateToken({email:email});
+        const url = 'http://localhost:1731/user/change-password?token='+token;
+        await emailHelper.passwordRest(email, url);
+        return res.status(200).json('Password reset link sent');
+    }catch(error){
+        return res.status(500).json('Internal Server Error');
+    }
+}
+
+const changePassword = async(req, res)=>{
+    const {email, password} = req.body;
+    try{
+        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json('Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.');
+        }
+        const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
+        await User.updateOne({email:email},{$set:{password:encryptedPassword}});
+        return res.status(200).json('Password updated');
     }catch(error){
         return res.status(500).json('Internal Server Error');
     }
@@ -44,7 +71,7 @@ const inviteUser = async(req, res)=>{
         if (exists){
             return res.status(409).json('User Exists');
         }else {
-            const encryptedPassword = await passcrypt(password, 10);
+            const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
             const findOrg = await User.findOne({_id:res.locals.id});
             const creator = await User.create({name, username, password:encryptedPassword, email, org_id:findOrg.org_id, role:'editor'});
             return res.status(201).json({message:'User Created', creator});
@@ -229,4 +256,5 @@ module.exports={
     getDp,
     inviteUser,verifyOtp,
     assignReportingPerson,
+    forgetPassword,changePassword,
 }

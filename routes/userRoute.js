@@ -8,6 +8,8 @@ const router = express.Router();
 router.post('/register', userController.register);
 router.post('/login', userController.login);
 router.post('/dp-upload', authenticateUser, upload.single('File'), userController.uploadDp);
+router.put('/change-password', userController.changePassword);
+router.get('/forget-password', userController.forgetPassword);
 router.get('/get-dp', authenticateUser, userController.getDp);
 router.post('/logout', authenticateUser, userController.logout);
 router.post('/invite', authenticateUser, (req, res, next)=>{
