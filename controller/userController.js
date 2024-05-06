@@ -39,21 +39,22 @@ const forgetPassword = async(req, res)=>{
         const token = generateToken({email:email});
         const url = 'http://localhost:1731/user/change-password?token='+token;
         await emailHelper.passwordRest(email, url);
-        return res.status(200).json('Password reset link sent');
+        return res.status(200).json({message:'Password reset link sent', token});
     }catch(error){
         return res.status(500).json('Internal Server Error');
     }
 }
 
 const changePassword = async(req, res)=>{
-    const {email, password} = req.body;
+    const {password} = req.body;
     try{
+        const emailId = res.locals.email;
         const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
         if (!passwordRegex.test(password)) {
             return res.status(400).json('Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.');
         }
         const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
-        await User.updateOne({email:email},{$set:{password:encryptedPassword}});
+        await User.updateOne({email:emailId},{$set:{password:encryptedPassword}});
         return res.status(200).json('Password updated');
     }catch(error){
         return res.status(500).json('Internal Server Error');
