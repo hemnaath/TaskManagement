@@ -38,7 +38,7 @@ const forgetPassword = async(req, res)=>{
     try{
         const token = generateToken({email:email});
         const exists = await User.findOne({email:email});
-        const url = 'http://localhost:3001/user/change-password?token='+token;
+        const url = 'http://localhost:3001/user/reset-password?token='+token;
         await emailHelper.passwordReset(email, url, exists.username);
         return res.status(200).json({message:'Password reset link sent'});
     }catch(error){
