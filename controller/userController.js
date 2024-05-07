@@ -24,7 +24,7 @@ const register = async (req, res) =>{
             const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
             const creator = await User.create({name, username, password:encryptedPassword, email, role:'admin'});
             const token = generateToken({name:name, username:username, email:email});
-            const url = 'http://localhost:1731/accounts/verification?token='+token;
+            const url = 'http://localhost:3001/accounts/verification?token='+token;
             emailHelper.verificationEmail(email, url, username);
             return res.status(201).json({message:'User Created', creator});
         }
@@ -38,7 +38,7 @@ const forgetPassword = async(req, res)=>{
     try{
         const token = generateToken({email:email});
         const exists = await User.findOne({email:email});
-        const url = 'http://localhost:1731/user/change-password?token='+token;
+        const url = 'http://localhost:3001/user/change-password?token='+token;
         await emailHelper.passwordReset(email, url, exists.username);
         return res.status(200).json({message:'Password reset link sent', token});
     }catch(error){
