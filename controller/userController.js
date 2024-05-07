@@ -40,7 +40,7 @@ const forgetPassword = async(req, res)=>{
         const exists = await User.findOne({email:email});
         const url = 'http://localhost:3001/user/change-password?token='+token;
         await emailHelper.passwordReset(email, url, exists.username);
-        return res.status(200).json({message:'Password reset link sent', token});
+        return res.status(200).json({message:'Password reset link sent'});
     }catch(error){
         return res.status(500).json('Internal Server Error');
     }
