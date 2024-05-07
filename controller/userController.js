@@ -25,7 +25,7 @@ const register = async (req, res) =>{
             const creator = await User.create({name, username, password:encryptedPassword, email, role:'admin'});
             const token = generateToken({name:name, username:username, email:email});
             const url = 'http://localhost:1731/accounts/verification?token='+token;
-            emailHelper.verificationEmail(email, url);
+            emailHelper.verificationEmail(email, url, username);
             return res.status(201).json({message:'User Created', creator});
         }
     }catch(error){
@@ -37,8 +37,9 @@ const forgetPassword = async(req, res)=>{
     const {email} = req.body;
     try{
         const token = generateToken({email:email});
+        const exists = await User.findOne({email:email});
         const url = 'http://localhost:1731/user/change-password?token='+token;
-        await emailHelper.passwordRest(email, url);
+        await emailHelper.passwordReset(email, url, exists.username);
         return res.status(200).json({message:'Password reset link sent', token});
     }catch(error){
         return res.status(500).json('Internal Server Error');

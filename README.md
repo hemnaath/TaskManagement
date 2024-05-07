@@ -5,7 +5,7 @@
 http://localhost:1731/user/register (POST) //User Registration
 http://localhost:1731/account/verification (GET) //User Verification
 http://localhost:1731/user/login (POST) //User Login
-http://localhost:1731/user/forget-password (GET) //Forget Password
+http://localhost:1731/user/forget-password (POST) //Forget Password
 http://localhost:1731/user/change-password (PUT) //Change Password
 
 
