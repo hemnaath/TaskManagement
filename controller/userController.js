@@ -6,8 +6,8 @@ const Otp = require('../model/otpModel');
 const os = require('os');
 const Ip = require('../model/ipModel');
 const Timesheet = require('../model/timesheetModel');
+const {jwtDecode} = require('jwt-decode');
 
-let globalUserId = null;
 
 
 const register = async (req, res) =>{
@@ -49,7 +49,12 @@ const forgetPassword = async(req, res)=>{
 const changePassword = async(req, res)=>{
     const {password} = req.body;
     try{
-        const emailId = res.locals.email;
+        const token = req.query.token;
+        decodedToken = jwtDecode(token);
+        if (!decodedToken) {
+            return res.status(400).json('Invalid token.');
+        }
+        const emailId = decodedToken.payload.email;
         const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
         if (!passwordRegex.test(password)) {
             return res.status(400).json('Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.');
