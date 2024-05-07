@@ -1,44 +1,46 @@
-const User = require('../model/userModel');
 const {passcrypt, compass} = require('../helper/passwordHelper');
 const {generateToken} = require('../helper/tokenHelper');
 const emailHelper = require('../helper/emailHelper');
 const Otp = require('../model/otpModel');
 const os = require('os');
 const Ip = require('../model/ipModel');
+const User = require('../model/userModel');
 const Timesheet = require('../model/timesheetModel');
 const {jwtDecode} = require('jwt-decode');
 
 
 
-const register = async (req, res) =>{
-    const {name, username, password, email} = req.body;
+const register = async (req, res) => {
+    const { name, username, password, email } = req.body;
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-    try{
+    
+    try {
         if (!passwordRegex.test(password)) {
-            return res.status(400).json('Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.');
+            return res.status(400).json({ error: 'Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.' });
         }
-        const exists = await User.findOne({email});
-        if (exists){
-            return res.status(409).json('User Exists');
-        }else if(!exists){
-            const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
-            const creator = await User.create({name, username, password:encryptedPassword, email, role:'admin'});
-            const token = generateToken({name:name, username:username, email:email});
-            const url = 'http://localhost:3000/accounts/verification?token='+token;
-            emailHelper.verificationEmail(email, url, username);
-            return res.status(201).json({message:'User Created', creator});
+        const existingUser = await User.findOne({$or:[{ email }, {username}]});
+        if (existingUser) {
+            return res.status(409).json({ error: 'User Already Exists' });
         }
-    }catch(error){
-        return res.status(500).json('Internal Server Error');
+        const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
+        const newUser = await User.create({ name, username, password: encryptedPassword, email, role: 'admin' });
+        const token = generateToken({ name, username, email });
+        const verificationUrl = process.env.VERIFICATION + token;
+        emailHelper.verificationEmail(email, verificationUrl, username);
+        return res.status(201).json({ message: 'User Created', user: newUser });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
+
 
 const forgetPassword = async(req, res)=>{
     const {email} = req.body;
     try{
         const token = generateToken({email:email});
         const exists = await User.findOne({email:email});
-        const url = 'http://localhost:3000/user/reset-password?token='+token;
+        const url = process.env.FORGET_PASSWORD+token;
         await emailHelper.passwordReset(email, url, exists.username);
         return res.status(200).json({message:'Password reset link sent'});
     }catch(error){
