@@ -2,37 +2,23 @@
 
 # API
 ---------------------------------------
-http://localhost:1731/user/register (POST) //User Registration
-http://localhost:1731/account/verification (GET) //User Verification
-http://localhost:1731/user/login (POST) //User Login
-http://localhost:1731/user/forget-password (POST) //Forget Password
-http://localhost:1731/user/resets-password (PUT) //Change Password
+http://localhost:1731/user/register (POST)
+http://localhost:1731/account/verification (GET)
+http://localhost:1731/user/login (POST)
+http://localhost:1731/user/forget-password (POST)
+http://localhost:1731/user/reset-password (PUT)
+
+http://localhost:1731/org/create-org (POST)
+http://localhost:1731/org/get-org (GET)
 
 
 # FEATURES
 
-create comment
-update comment
-delete comment
+Login
+Register
+Account verification
+Forget password
+Reset password
 
-create org
-get org
-
-create project
-update project
-get project
-delete project
-get all project
-
-create task
-update task
-delete task
-pagination
-
-login
-register
-logout
-uploadDP
-getDP
-invite user
-verify otp
+Create organization
+Get organization details
