@@ -16,6 +16,8 @@ http://localhost:1731/project/create (POST)
 
 http://localhost:1731/task/create/:projectID (POST)
 http://localhost:1731/task/task-pagination/:projectId (GET)
+http://localhost:1731/task/update/:taskId (PUT)
+http://localhost:1731/task/delete/:taskId (DELETE)
 
 
 # FEATURES
@@ -25,6 +27,14 @@ Register
 Account verification
 Forget password
 Reset password
+Logout
 
 Create organization
 Get organization details
+
+Create project
+
+Create task
+Update task
+Delete task
+Get task with pagination
