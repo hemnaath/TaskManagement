@@ -66,10 +66,11 @@ const deleteTask = async(req, res)=>{
 }
 
 const taskPagination = async (req, res)=>{
+    const projectId = req.params.id;
     const {page, limit} = req.body;
     const skip = (page - 1) * limit;
     try{
-        const pagination = await Task.find().skip(skip).limit(limit);
+        const pagination = await Task.find({project_id:projectId}).skip(skip).limit(limit);
         const totalData = await Task.countDocuments();
         const totalPages = Math.ceil(totalData/limit);
         const endIndex = (page * limit);

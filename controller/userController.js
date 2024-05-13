@@ -182,7 +182,6 @@ const verifyOtp = async (req, res) =>{
 
 const logout = async (req, res) => {
     try {
-        globalUserId = res.locals.id;
         const authHeader = req.headers.authorization;
         if (authHeader) {
             const exists = await Timesheet.findOne({ user_id: res.locals.id, date: new Date().toLocaleDateString()});
@@ -230,19 +229,14 @@ async function tsWorkedHrs(id) {
         let outTimeMin = (outTime[1]);
         let inTimeHrs = (inTime[0]);
         let inTimeMin = (inTime[1]);
-        
         let hrs = outTimeHrs - inTimeHrs;
         let min = outTimeMin - inTimeMin;
-        
         if (min < 0) {
             min += 60;
             hrs -= 1;
         }
-        
         let timeDiff = hrs + ':' + min;
-        
         await exists.updateOne({ $set: { worked_hours: timeDiff } });
-        console.log(timeDiff);
     }
 }
 
