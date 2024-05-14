@@ -34,7 +34,36 @@ const getOrg = async (req, res)=>{
     }
 }
 
+const updateOrg = async(req, res)=>{
+    const orgId = req.params.id;
+    const {orgName, orgType} = req.body;
+    try{
+        const exists = await Org.findOne({_id:orgId});
+        if(exists){
+            await exists.updateOne({$set:{org_name:orgName, org_type:orgType}});
+            return res.status(204).json('Org updated');
+        }
+    }catch(error){
+        return res.status(500).json('Internal server error');
+    }
+}
+
+const deleteOrg = async(req, res)=>{
+    const orgId = req.params.id;
+    try{
+        const exists = await Org.findOne({_id:orgId});
+        if(exists){
+            await exists.deleteOne();
+            return res.status(200).json('Org deleted');
+        }
+    }catch(error){
+        return res.status(500).json('Internal server error');
+    }
+}
+
 module.exports = {
     createOrg,
     getOrg,
+    updateOrg,
+    deleteOrg,
 }

@@ -71,7 +71,7 @@ const taskPagination = async (req, res)=>{
     const skip = (page - 1) * limit;
     try{
         const pagination = await Task.find({project_id:projectId}).skip(skip).limit(limit);
-        const totalData = await Task.countDocuments();
+        const totalData = await Task.countDocuments({project_id:projectId});
         const totalPages = Math.ceil(totalData/limit);
         const endIndex = (page * limit);
         const startIndex = endIndex - ((limit - 10) + 9);
