@@ -19,7 +19,7 @@ const createProject = async(req, res)=>{
 
 const getAllProjects = async(req, res) => {
     try{
-        const exists = await Project.find({created_by:res.locals.id});
+        const exists = await Project.find({created_by:res.locals.id}).sort({createdAt:-1});
         if(exists){
             return res.status(200).json(exists);
         }else{
