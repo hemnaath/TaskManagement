@@ -9,8 +9,8 @@ const createProject = async(req, res)=>{
             return res.status(409).json({message:'Record exists'});
         }else{
             const orgFinder = await User.findOne({_id:res.locals.id});
-            await Project.create({project_name:projectName, created_by:res.locals.id, org_id:orgFinder.org_id});
-            return res.status(200).json({message:'Project Created'});
+            const newProject = await Project.create({project_name:projectName, created_by:res.locals.id, org_id:orgFinder.org_id});
+            return res.status(200).json({message:'Project Created', newProject});
         }
     }catch(error){
         return res.status(500).json('Internal Server Error');

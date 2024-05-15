@@ -15,8 +15,8 @@ const createTask = async (req, res) => {
             } else {
                 const findUser = await User.findOne({ username:assigned});
                 assignedTo = findUser._id;
-                await Task.create({task_title:taskTitle, description, notes, assigned_to:assignedTo, status, created_by:res.locals.id, priority, release_version:releaseVersion, effort_estimation:effortEstimation, task_type:taskType, project_id:projectId, filename:req.file.originalname, filepath:req.file.path});
-                return res.status(201).json('Task Created');
+                const newTask = await Task.create({task_title:taskTitle, description, notes, assigned_to:assignedTo, status, created_by:res.locals.id, priority, release_version:releaseVersion, effort_estimation:effortEstimation, task_type:taskType, project_id:projectId, filename:req.file.originalname, filepath:req.file.path});
+                return res.status(201).json({message:'Task Created', newTask});
             }
     }catch(error){
         return res.status(500).json('Internal Server Error');
