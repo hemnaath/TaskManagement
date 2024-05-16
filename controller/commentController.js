@@ -1,3 +1,4 @@
+const { ObjectId } = require('mongodb');
 const Comment = require('../model/commentModel');
 
 const createComment = async(req, res)=>{
@@ -42,23 +43,29 @@ const deleteComment = async (req, res)=>{
     }
 }
 
-const getComment = async(req, res)=>{
+const getComment = async (req, res) => {
     const taskId = req.params.id;
-    let isDeletable = false;
-    try{
-        const exists = await Comment.findOne({task_id:taskId});
+    try {
+        const exists = await Comment.find({ task_id: taskId });
         if(exists){
-            if(exists.user_id === res.locals.id || res.locals.role === 'admin'){
-                isDeletable = true;
+            for(let key in exists){
+                const userId = exists[key].user_id;
+                const localId = new ObjectId(res.locals.id);
+                if(userId.equals(localId) || res.locals.role === 'admin'){
+                    exists[key]._doc.isDeletable = true;
+                }else{
+                    exists[key]._doc.isDeletable = false;
+                }
             }
-            return res.status(200).json({exists, isDeletable});
-        }else{
-            return res.status(404).json('No comments found');
+            return res.status(200).json(exists);
         }
     }catch(error){
         return res.status(500).json('Internal server error');
     }
 }
+
+
+
 
 module.exports = {
     createComment,
