@@ -1,12 +1,14 @@
 const express = require('express');
 const orgController = require('../controller/orgController');
 const authenticateUser = require('../middleware/auth');
+const createRateLimiter = require('../middleware/rateLimiter');
+
 
 const router = express.Router();
 
-router.post('/create', authenticateUser, orgController.createOrg);
-router.get('/get-org', authenticateUser, orgController.getOrg);
-router.put('/update/:id', authenticateUser, orgController.updateOrg);
-router.delete('/delete/:id', authenticateUser, orgController.deleteOrg);
+router.post('/create', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), orgController.createOrg);
+router.get('/get-org', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), orgController.getOrg);
+router.put('/update/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), orgController.updateOrg);
+router.delete('/delete/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), orgController.deleteOrg);
 
 module.exports = router;
