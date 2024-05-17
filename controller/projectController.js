@@ -8,12 +8,13 @@ const createProject = async(req, res)=>{
         if(exists){
             return res.status(409).json({message:'Record exists'});
         }else{
-            const orgFinder = await User.findOne({_id:res.locals.id});
+            const orgFinder = await User.findById(res.locals.id);
             const newProject = await Project.create({project_name:projectName, created_by:res.locals.id, org_id:orgFinder.org_id});
             return res.status(200).json({message:'Project Created', newProject});
         }
     }catch(error){
-        return res.status(500).json('Internal Server Error');
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
     }
 }
 
@@ -23,10 +24,11 @@ const getAllProjects = async(req, res) => {
         if(exists){
             return res.status(200).json(exists);
         }else{
-            return res.status(404).json('No projects found');
+            return res.status(404).json({message:'No projects found'});
         }
     }catch(error){
-        return res.status(500).json('Internal Server Error');
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
     } 
 }
 
@@ -34,44 +36,47 @@ const updateProject = async (req, res)=>{
     const projectId = req.params.id;
     const{projectName} = req.body;
     try{
-        const exists = await Project.findOne({_id:projectId});
+        const exists = await Project.findById(projectId);
         if(exists){
             await exists.updateOne({$set:{project_name:projectName}});
-            return res.status(301).json('Project Updated');
+            return res.status(301).json({message:'Project Updated'});
         }else{
-            return res.status(404).json('No Projects Found');
+            return res.status(404).json({message:'No Projects Found'});
         }
     }catch(error){
-        return res.status(500).json('Internal Server Error');
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
     }
 }
 
 const deleteProject = async (req, res)=>{
     const projectId = req.params.id;
     try{
-        const exists = await Project.findOne({_id:projectId});
+        const exists = await Project.findById(projectId);
         if(exists){
             await exists.deleteOne();
-            return res.status(200).json('Project Deleted');
+            return res.status(200).json({message:'Project Deleted'});
         }else{
-            return res.status(404).json('No Project Found');
+            return res.status(404).json({message:'No Project Found'});
         }
     }catch(error){
-        return res.status(500).json('Internal Server Error');
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
     }
 }
 
 const getProjectById = async (req, res)=>{
     const projectId = req.params.id;
     try{
-        const exists = await Project.findOne({_id:projectId});
+        const exists = await Project.findById(projectId);
         if(exists){
             return res.status(200).json(exists);
         }else{
-            return res.status(404).json('No Projects Found');
+            return res.status(404).json({message:'No Projects Found'});
         }
     }catch(error){
-        return res.status(500).json('Internal Server Error');
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
     } 
 }
 

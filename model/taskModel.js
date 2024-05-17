@@ -1,27 +1,27 @@
 const mongoose = require('mongoose');
-const autoIncrement = require('mongoose-sequence');
+const autoIncrement = require('mongoose-sequence')(mongoose);
 
 const taskSchema = new mongoose.Schema({
-    task_title:{type:String, require:true},
-    description:{type: String, require:true},
-    notes:{type:String, require:true},
-    assigned_to:{type:mongoose.Schema.Types.ObjectId, require:true},
-    status:{type:String, require:true},
-    created_by:{type:mongoose.Schema.Types.ObjectId, require:true},
-    priority:{type:String, require:true},
-    release_version:{type:String, require:true},
-    start_date:{type:Date, require:true},
-    effort_estimation:{type:Number, require:true},
-    task_type:{type:String, require:true},
-    project_id:{type:mongoose.Schema.Types.ObjectId, require:true},
-    filename:{type:String},
-    filepath:{type:String}
-},
-{
-    timestamps:true
+    task_title: { type: String, required: true },
+    description: { type: String, default:null },
+    notes: { type: String, default:null },
+    assigned_to: { type: mongoose.Schema.Types.ObjectId, default:null },
+    status: { type: String, enum: ['pending', 'in_progress', 'completed', 'on_hold'], default:null},
+    created_by: { type: mongoose.Schema.Types.ObjectId, required: true },
+    priority: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default:null},
+    release_version: { type: String, default:null },
+    start_date: { type: Date, default:null },
+    effort_estimation: { type: Number, default:null },
+    task_type: { type: String, enum: ['bug', 'cr'], required: true },
+    project_id: { type: mongoose.Schema.Types.ObjectId, required: true },
+    filename: { type: String, default:null },
+    filepath: { type: String, default:null },
+}, {
+    timestamps: true
 });
-taskSchema.plugin(autoIncrement(mongoose), {inc_field:'task_number'});
 
-const task = mongoose.model('task', taskSchema);
+taskSchema.plugin(autoIncrement, { inc_field: 'task_number' });
 
-module.exports = task;
+const Task = mongoose.model('Task', taskSchema);
+
+module.exports = Task;

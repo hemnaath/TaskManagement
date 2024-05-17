@@ -44,7 +44,8 @@ const forgetPassword = async(req, res)=>{
         await emailHelper.passwordReset(email, url, exists.username);
         return res.status(200).json({message:'Password reset link sent'});
     }catch(error){
-        return res.status(500).json('Internal Server Error');
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
     }
 }
 
@@ -53,18 +54,19 @@ const changePassword = async(req, res)=>{
     try{
         decodedToken = jwtDecode(token);
         if (!decodedToken) {
-            return res.status(400).json('Invalid token.');
+            return res.status(400).json({message:'Invalid token'});
         }
         const emailId = decodedToken.payload.email;
         const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
         if (!passwordRegex.test(password)) {
-            return res.status(400).json('Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.');
+            return res.status(400).json({message:'Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.'});
         }
         const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
         await User.updateOne({email:emailId},{$set:{password:encryptedPassword}});
-        return res.status(200).json('Password updated');
+        return res.status(200).json({message:'Password updated'});
     }catch(error){
-        return res.status(500).json('Internal Server Error');
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
     }
 }
 
@@ -73,33 +75,35 @@ const inviteUser = async(req, res)=>{
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     try{
         if (!passwordRegex.test(password)) {
-            return res.status(400).json('Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.');
+            return res.status(400).json({message:'Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.'});
         }
         const exists = await User.findOne({email});
         if (exists){
-            return res.status(409).json('User Exists');
+            return res.status(409).json({message:'User Exists'});
         }else {
             const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
-            const findOrg = await User.findOne({_id:res.locals.id});
+            const findOrg = await User.findById(res.locals.id);
             const creator = await User.create({name, username, password:encryptedPassword, email, org_id:findOrg.org_id, role:'editor'});
             return res.status(201).json({message:'User Created', creator});
         }
     }catch(error){
-        return res.status(500).json('Internal Server Error');
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
     }
 }
 
 const getDp = async(req, res)=>{
     try{
         const userId = res.locals.id;
-        const exists = await User.findOne({_id:userId});
+        const exists = await User.findById(userId);
         if(exists){
             const imgLink = 'https://localhost:1731/' + exists.filepath;
             return res.status(200).json({message:imgLink}); 
         }
-        return res.status(404).json('User not Found');
+        return res.status(404).json({message:'User not Found'});
     }catch(error){
-        return res.status(500).json('Internal Server Error');
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
     }
 }
 
@@ -143,10 +147,10 @@ const login = async (req, res) => {
             }
         }
 
-        return res.status(404).json('User Not Found');
+        return res.status(404).json({message:'User Not Found'});
     } catch (error) {
         console.error(error);
-        return res.status(500).json('Internal Server Error');
+        return res.status(500).json({error:'Internal Server Error'});
     }
 }
 
@@ -170,12 +174,13 @@ const verifyOtp = async (req, res) =>{
             }
             await Ip.create({ip_address:ipAddr, user_id:res.locals.id});
             await Otp.deleteMany();
-            return res.status(200).json('OTP Verified');
+            return res.status(200).json({message:'OTP Verified'});
         }else{
-            return res.status(400).json('Invalid OTP');
+            return res.status(400).json({message:'Invalid OTP'});
         }
     }catch(error){
-        return res.status(500).json('Internal Server Error');
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
     }
     
 }
@@ -189,18 +194,19 @@ const logout = async (req, res) => {
                 const currentTime = new Date().toLocaleTimeString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata' });
                 await exists.updateOne({$set:{out_time:currentTime}});
             }
-            res.status(200).json('User LoggedOut');
+            res.status(200).json({message:'User LoggedOut'});
         }
         await tsWorkedHrs(res.locals.id);
     } catch (error) {
-        return res.status(500).json('Internal Server Error');
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
     }
 }
 
 const uploadDp = async(req, res)=>{
     const userId = res.locals.id;
     try{
-        const exists = User.findOne({_id:userId});
+        const exists = User.findById(userId);
         if(exists){
             const updater = await exists.updateOne({$set:{
                 filename: req.file.originalname,
@@ -209,14 +215,15 @@ const uploadDp = async(req, res)=>{
                 filesize: req.file.size
             }});
             if(req.file.size <= 1024 * 1024){
-                return res.status(200).json('Image Uploaded');
+                return res.status(200).json({message:'Image Uploaded'});
             }else{
-                return res.status(400).json('Image Size too Large');
+                return res.status(400).json({message:'Image Size too Large'});
             }
         }
-        return res.status(404).json('User not Found');
+        return res.status(404).json({message:'User not Found'});
     }catch(error){
-        return res.status(500).json('Internal Server Error');
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
     }
 }
 
@@ -245,9 +252,10 @@ const assignReportingPerson = async(req, res)=>{
     try{
         const findReportingPerson = await User.findOne({username:reportingPerson});
         await User.updateMany({username:username},{reporting_person:findReportingPerson._id});
-        return res.status(301).json('Reporting Persons assigned');
+        return res.status(301).json({message:'Reporting Persons assigned'});
     }catch(error){
-        return res.status(500).json('Internal Server Error');
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
     }
 }
 

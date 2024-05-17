@@ -11,5 +11,6 @@ router.post('/create/:id', authenticateUser, fileHelper.upload.single('File'), t
 router.put('/update/:id', authenticateUser, fileHelper.upload.single('File'), taskController.updateTask);
 router.delete('/delete/:id', authenticateUser, taskController.deleteTask);
 router.get('/task-pagination/:id', authenticateUser, taskController.taskPagination);
+router.get('/get-task/:id', authenticateUser, taskController.getTask);
 
 module.exports = router;
