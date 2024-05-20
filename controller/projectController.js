@@ -1,5 +1,7 @@
 const Project = require('../model/projectModel');
 const User = require('../model/userModel');
+const Task = require('../model/taskModel');
+const Comment = require('../model/commentModel');
 
 const createProject = async(req, res)=>{
     const {projectName} = req.body;
@@ -54,6 +56,8 @@ const deleteProject = async (req, res)=>{
     try{
         const exists = await Project.findById(projectId);
         if(exists){
+            await Task.deleteMany({project_id:projectId});
+            await Comment.deleteMany({project_id:projectId});
             await exists.deleteOne();
             return res.status(200).json({message:'Project Deleted'});
         }else{

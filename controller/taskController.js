@@ -1,5 +1,6 @@
 const Task = require('../model/taskModel');
 const User = require('../model/userModel');
+const Comment = require('../model/commentModel');
 
 const createTask = async (req, res) => {
     const projectId = req.params.id;
@@ -18,7 +19,7 @@ const createTask = async (req, res) => {
     }
 }
 
-async function updateTask(req, res) {
+const updateTask = async(req, res) =>{
     const taskId = req.params.id;
     let assignedTo = null;
     let startDate = null;
@@ -50,6 +51,7 @@ const deleteTask = async(req, res)=>{
     try{
         const exists = await Task.findById(taskId);
         if(exists){
+            await Comment.deleteMany({task_id:taskId});
             await exists.deleteOne();
             return res.status(200).json({message:'Task Deleted'});
         }else{

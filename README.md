@@ -9,7 +9,7 @@ http://localhost:1731/user/forget-password (POST)
 http://localhost:1731/user/reset-password (PUT)
 http://localhost:1731/user/logout (POST)
 
-http://localhost:1731/org/create-org (POST)
+http://localhost:1731/org/create (POST)
 http://localhost:1731/org/get-org (GET)
 http://localhost:1731/org/update/:orgId (PUT)
 http://localhost:1731/org/delete/:orgId (DELETE)

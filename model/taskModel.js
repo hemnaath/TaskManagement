@@ -6,7 +6,7 @@ const taskSchema = new mongoose.Schema({
     description: { type: String, default:null },
     notes: { type: String, default:null },
     assigned_to: { type: mongoose.Schema.Types.ObjectId, default:null },
-    status: { type: String, enum: ['pending', 'in_progress', 'completed', 'on_hold'], default:null},
+    status: { type: String, enum: ['completed', 'on_hold', 'accepted', 'unassigned'], default:null},
     created_by: { type: mongoose.Schema.Types.ObjectId, required: true },
     priority: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default:null},
     release_version: { type: String, default:null },

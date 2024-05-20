@@ -4,6 +4,7 @@ const commentSchema = new mongoose.Schema({
     comment:{type:String, require:true},
     user_id:{type:mongoose.Schema.Types.ObjectId, require:true},
     task_id:{type:mongoose.Schema.Types.ObjectId, require:true},
+    project_id:{type:mongoose.Schema.Types.ObjectId, require:true}
 },
 {
     timestamps:true
