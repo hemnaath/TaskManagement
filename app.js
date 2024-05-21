@@ -12,6 +12,7 @@ const emailRouting = require('./routes/emailRoute');
 const taskRouting = require('./routes/taskRoute');
 const commentRouting = require('./routes/commentRoute');
 const leaveRouting = require('./routes/leaveRoute');
+const attendanceRouting = require('./routes/attendanceRoute');
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/email', emailRouting);
 app.use('/task', taskRouting);
 app.use('/comment', commentRouting);
 app.use('/leave', leaveRouting);
+app.use('/attendance', attendanceRouting);
 
 
 
