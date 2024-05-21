@@ -4,13 +4,13 @@ const Comment = require('../model/commentModel');
 
 const createTask = async (req, res) => {
     const projectId = req.params.id;
-    const { taskTitle, taskType } = req.body;
+    const { taskTitle, taskType, parentTask } = req.body;
     try{
         const exists = await Task.findOne({task_title:taskTitle});
             if (exists) {
                 return res.status(400).json({message:'Task with the same title already exists'});
             } else {
-                const newTask = await Task.create({task_title:taskTitle, task_type:taskType, created_by:res.locals.id, project_id:projectId});
+                const newTask = await Task.create({task_title:taskTitle, task_type:taskType, created_by:res.locals.id, project_id:projectId, parent_task:parentTask});
                 return res.status(201).json({message:'Task Created', newTask});
             }
     }catch(error){
@@ -52,6 +52,7 @@ const deleteTask = async(req, res)=>{
         const exists = await Task.findById(taskId);
         if(exists){
             await Comment.deleteMany({task_id:taskId});
+            await Task.deleteMany({parent_task:taskId});
             await exists.deleteOne();
             return res.status(200).json({message:'Task Deleted'});
         }else{

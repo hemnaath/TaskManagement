@@ -14,6 +14,7 @@ const taskSchema = new mongoose.Schema({
     effort_estimation: { type: Number, default:null },
     task_type: { type: String, enum: ['bug', 'cr'], required: true },
     project_id: { type: mongoose.Schema.Types.ObjectId, required: true },
+    parent_task:{type:mongoose.Schema.Types.ObjectId, default:null},
     filename: { type: String, default:null },
     filepath: { type: String, default:null },
 }, {
