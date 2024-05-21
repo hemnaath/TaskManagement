@@ -1,6 +1,7 @@
 const Task = require('../model/taskModel');
 const User = require('../model/userModel');
 const Comment = require('../model/commentModel');
+const Org = require('../model/orgModel');
 
 const createTask = async (req, res) => {
     const projectId = req.params.id;
@@ -88,6 +89,7 @@ const getTask = async(req, res)=>{
         const exists = await Task.findById(taskId);
         if(exists){
             const userData = await User.findById(exists.created_by);
+            const orgPrefix = await Org.findById(res.locals.org);
             return res.status(200).json({
                 id:exists._id,
                 taskTitle:exists.task_title,
@@ -101,7 +103,7 @@ const getTask = async(req, res)=>{
                 startDate:exists.start_date,
                 effortEstimation : exists.effort_estimastion,
                 filename:exists.filename,
-                taskNumber:exists.task_type+'-'+exists.task_number,
+                taskNumber:orgPrefix.org_prefix+'-'+exists.task_number,
             });
         }
     }catch(error){

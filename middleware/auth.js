@@ -13,7 +13,7 @@ const authenticateUser = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.SECRET_KEY);        
         res.locals.id = decoded.payload.id;
         res.locals.role = decoded.payload.role;
-        res.locals.email = decoded.payload.email;
+        res.locals.org = decoded.payload.org;
         next();
     } catch (error) {
         return res.status(401).json({ message: 'Unauthorized: Invalid token' });
