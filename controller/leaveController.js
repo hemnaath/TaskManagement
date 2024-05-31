@@ -15,7 +15,7 @@ const resetLeave = async(req, res)=>{
 const applyLeave = async (req, res) => {
     const { leaveType, startDate, endDate, startTime, endTime, reason, emergencyContact } = req.body;
     try {
-        const user = await User.findById(res.locals.id);
+        const user = await User.findById(req.user.id);
         if (user) {
             const leaveBalance = user[leaveType];
             if (leaveBalance >= 1) {
@@ -25,7 +25,7 @@ const applyLeave = async (req, res) => {
                 const end_time = endTime ? Date.parse(endTime) : null;
                 const oneDay = 24 * 60 * 60 * 1000;
                 const total_days = Math.round(Math.abs((end_date - start_date) / oneDay)) + 1;
-                const leaveApplication = await Leave.create({leave_type:leaveType, start_date, end_date, start_time, end_time, status:'pending', reason, total_days, emergency_contact:emergencyContact, applied_by:res.locals.id});
+                const leaveApplication = await Leave.create({leave_type:leaveType, start_date, end_date, start_time, end_time, status:'pending', reason, total_days, emergency_contact:emergencyContact, applied_by:req.user.id});
                 return res.status(200).json({ message: 'Leave applied', leaveApplication });
             } else {
                 return res.status(400).json({ message: `No more ${leaveType}` });
@@ -42,7 +42,7 @@ const applyLeave = async (req, res) => {
 
 const leaveRequest = async (req, res) => {
     try {
-        const downLine = await User.find({ reporting_person: res.locals.id });
+        const downLine = await User.find({ reporting_person: req.user.id });
         const leaveRequests = await Leave.find({ applied_by: { $in: downLine.map(user => user.id) } });
         if(leaveRequests){
             return res.status(200).json(leaveRequests);

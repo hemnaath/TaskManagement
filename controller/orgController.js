@@ -9,7 +9,7 @@ const createOrg = async(req, res)=>{
             return res.status(400).json({message:'Org Exists'});
         }else{
             const creator = await Org.create({org_name:orgName, org_type:orgType, org_prefix:orgPrefix});
-            const updateExists = await User.findById(res.locals.id);
+            const updateExists = await User.findById(req.user.id);
             if(updateExists){
                 await updateExists.updateOne({$set:{org_id: creator._id}});
             }
@@ -23,7 +23,7 @@ const createOrg = async(req, res)=>{
 
 const getOrg = async (req, res)=>{
     try{
-        const userExists = await User.findById(res.locals.id);
+        const userExists = await User.findById(req.user.id);
         const orgExists = await Org.findById(userExists.org_id);
         if(orgExists){
             return res.status(200).json(orgExists);

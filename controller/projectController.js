@@ -10,8 +10,8 @@ const createProject = async(req, res)=>{
         if(exists){
             return res.status(409).json({message:'Record exists'});
         }else{
-            const orgFinder = await User.findById(res.locals.id);
-            const newProject = await Project.create({project_name:projectName, created_by:res.locals.id, org_id:orgFinder.org_id});
+            const orgFinder = await User.findById(req.user.id);
+            const newProject = await Project.create({project_name:projectName, created_by:req.user.id, org_id:orgFinder.org_id});
             return res.status(200).json({message:'Project Created', newProject});
         }
     }catch(error){
@@ -22,7 +22,7 @@ const createProject = async(req, res)=>{
 
 const getAllProjects = async(req, res) => {
     try{
-        const exists = await Project.find({created_by:res.locals.id}).sort({createdAt:-1});
+        const exists = await Project.find({created_by:req.user.id}).sort({createdAt:-1});
         if(exists){
             return res.status(200).json(exists);
         }else{

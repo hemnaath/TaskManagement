@@ -82,7 +82,7 @@ const inviteUser = async(req, res)=>{
             return res.status(409).json({message:'User Exists'});
         }else {
             const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
-            const findOrg = await User.findById(res.locals.id);
+            const findOrg = await User.findById(req.user.id);
             const creator = await User.create({name, username, password:encryptedPassword, email, org_id:findOrg.org_id, role:'editor'});
             return res.status(201).json({message:'User Created', creator});
         }
@@ -94,7 +94,7 @@ const inviteUser = async(req, res)=>{
 
 const getDp = async(req, res)=>{
     try{
-        const userId = res.locals.id;
+        const userId = req.user.id;
         const exists = await User.findById(userId);
         if(exists){
             const imgLink = 'https://localhost:1731/' + exists.filepath;
@@ -162,7 +162,7 @@ const verifyOtp = async (req, res) =>{
         if(exists){
             if(os.type() == 'Darwin'){
                 ipAddr = os.networkInterfaces().en0.filter((e) => e.family === 'IPv4')[0].address;
-                ipExists = await Ip.findOne({$and:[{ip_address:ipAddr}, {user_id:res.locals.id}]});
+                ipExists = await Ip.findOne({$and:[{ip_address:ipAddr}, {user_id:req.user.id}]});
             }if(os.type() == 'Windows_NT'){
                 if(os.networkInterfaces().Ethernet != null){
                     ipAddr = os.networkInterfaces().Ethernet.filter((e) => e.family === 'IPv4')[0].address;
@@ -172,7 +172,7 @@ const verifyOtp = async (req, res) =>{
                     ipExists = await Ip.findOne({$and:[{ip_address:ipAddr}, {user_id:exists._id}]});
                 }
             }
-            await Ip.create({ip_address:ipAddr, user_id:res.locals.id});
+            await Ip.create({ip_address:ipAddr, user_id:req.user.id});
             await Otp.deleteMany();
             return res.status(200).json({message:'OTP Verified'});
         }else{
@@ -189,14 +189,14 @@ const logout = async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
         if (authHeader) {
-            const exists = await Timesheet.findOne({ user_id: res.locals.id, date: new Date().toLocaleDateString()});
+            const exists = await Timesheet.findOne({ user_id: req.user.id, date: new Date().toLocaleDateString()});
             if (exists) {
                 const currentTime = new Date().toLocaleTimeString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata' });
                 await exists.updateOne({$set:{out_time:currentTime}});
             }
             res.status(200).json({message:'User LoggedOut'});
         }
-        await tsWorkedHrs(res.locals.id);
+        await tsWorkedHrs(req.user.id);
     } catch (error) {
         console.log(error);
         return res.status(500).json({error:'Internal Server Error'});
@@ -204,7 +204,7 @@ const logout = async (req, res) => {
 }
 
 const uploadDp = async(req, res)=>{
-    const userId = res.locals.id;
+    const userId = req.user.id;
     try{
         const exists = User.findById(userId);
         if(exists){

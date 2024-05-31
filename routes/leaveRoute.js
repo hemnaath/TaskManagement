@@ -1,13 +1,14 @@
 const express = require('express');
 const leaveController = require('../controller/leaveController');
-const authenticateUser = require('../middleware/auth');
+const passport = require('../middleware/auth');
 const createRateLimiter = require('../middleware/rateLimiter');
 
 
 const router = express.Router();
+const authenticateUser = passport.authenticate('jwt', { session: false });
 
 router.post('/reset', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), (req, res, next)=>{
-    if(res.locals.role !== 'admin'){
+    if(req.user.role !== 'admin'){
         return res.status(403).json('Unauthorized Access');
     }
     next();

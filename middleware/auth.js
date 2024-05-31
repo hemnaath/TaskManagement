@@ -1,23 +1,26 @@
-const jwt = require('jsonwebtoken');;
 require('dotenv').config();
+const passport = require('passport');
+const passportJWT = require('passport-jwt');
 const User = require('../model/userModel');
+const { ExtractJwt } = require('passport-jwt');
 
-const authenticateUser = async (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    
-    if (!authHeader) {
-        return res.status(401).json({ message: 'Unauthorized: No token provided' });
-    }
-    const token = authHeader.split(' ')[1];    
+const JWTStrategy = passportJWT.Strategy;
+const jwtOptions = {
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    secretOrKey: process.env.SECRET_KEY
+};
+
+passport.use(new JWTStrategy(jwtOptions, async (jwtPayload, done) => {
     try {
-        const decoded = jwt.verify(token, process.env.SECRET_KEY);        
-        res.locals.id = decoded.payload.id;
-        res.locals.role = decoded.payload.role;
-        res.locals.org = decoded.payload.org;
-        next();
+        const user = await User.findById(jwtPayload.payload.id);
+        if (user) {
+            return done(null, user);
+        } else {
+            return done(null, false);
+        }
     } catch (error) {
-        return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+        return done(error, false);
     }
-}
+}));
 
-module.exports = authenticateUser;
+module.exports = passport;

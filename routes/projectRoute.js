@@ -1,10 +1,11 @@
 const express = require('express');
 const projectController = require('../controller/projectController');
-const authenticateUser = require('../middleware/auth');
+const passport = require('../middleware/auth');
 const createRateLimiter = require('../middleware/rateLimiter');
 
 
 const router = express.Router();
+const authenticateUser = passport.authenticate('jwt', { session: false });
 
 router.post('/create', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), projectController.createProject);
 router.get('/get-all', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), projectController.getAllProjects);

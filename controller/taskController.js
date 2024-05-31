@@ -11,7 +11,7 @@ const createTask = async (req, res) => {
             if (exists) {
                 return res.status(400).json({message:'Task with the same title already exists'});
             } else {
-                const newTask = await Task.create({task_title:taskTitle, task_type:taskType, created_by:res.locals.id, project_id:projectId, parent_task:parentTask});
+                const newTask = await Task.create({task_title:taskTitle, task_type:taskType, created_by:req.user.id, project_id:projectId, parent_task:parentTask});
                 return res.status(201).json({message:'Task Created', newTask});
             }
     }catch(error){
@@ -36,7 +36,7 @@ const updateTask = async(req, res) =>{
             }
             const findUser = await User.findOne({ username: assigned });
             assignedTo = findUser._id;
-            await exists.updateOne({ $set: { task_title: taskTitle, description, notes, assigned_to: assignedTo, status, created_by: res.locals.id, priority, release_version: releaseVersion, start_date: startDate, effort_estimation: effortEstimation, filename: req.file.originalname, filepath: req.file.path } });
+            await exists.updateOne({ $set: { task_title: taskTitle, description, notes, assigned_to: assignedTo, status, created_by: req.user.id, priority, release_version: releaseVersion, start_date: startDate, effort_estimation: effortEstimation, filename: req.file.originalname, filepath: req.file.path } });
             return res.status(201).json({ message: 'Task Updated' });
         } else {
             return res.status(400).json({ message: 'No task exists' });
@@ -89,7 +89,7 @@ const getTask = async(req, res)=>{
         const exists = await Task.findById(taskId);
         if(exists){
             const userData = await User.findById(exists.created_by);
-            const orgPrefix = await Org.findById(res.locals.org);
+            const orgPrefix = await Org.findById(req.user.org);
             return res.status(200).json({
                 id:exists._id,
                 taskTitle:exists.task_title,
