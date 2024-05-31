@@ -35,7 +35,7 @@ const updateTask = async(req, res) =>{
                 startDate = new Date();
             }
             const findUser = await User.findOne({ username: assigned });
-            assignedTo = findUser._id;
+            assignedTo = findUser.id;
             await exists.updateOne({ $set: { task_title: taskTitle, description, notes, assigned_to: assignedTo, status, created_by: req.user.id, priority, release_version: releaseVersion, start_date: startDate, effort_estimation: effortEstimation, filename: req.file.originalname, filepath: req.file.path } });
             return res.status(201).json({ message: 'Task Updated' });
         } else {
@@ -91,7 +91,7 @@ const getTask = async(req, res)=>{
             const userData = await User.findById(exists.created_by);
             const orgPrefix = await Org.findById(req.user.org);
             return res.status(200).json({
-                id:exists._id,
+                id:exists.id,
                 taskTitle:exists.task_title,
                 description:exists.description,
                 notes:exists.notes,

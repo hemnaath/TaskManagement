@@ -117,7 +117,7 @@ const login = async (req, res) => {
         if (exists) {
             const comparePassword = await compass(password, exists.password);
             if (comparePassword) {
-                token = generateToken({ role: exists.role, id: exists._id, org: exists.org_id });
+                token = generateToken({ role: exists.role, id: exists.id, org: exists.org_id });
                 if (exists.orgId) {
                     orgFlag = true;
                 }
@@ -130,17 +130,17 @@ const login = async (req, res) => {
                 const timezone = { hour12: false, timeZone: 'Asia/Kolkata' };
                 const currentDate = new Date().toLocaleDateString();
                 const currentTime = new Date().toLocaleTimeString('en-IN', timezone);
-                ipExists = await Ip.findOne({ ip_address: ipAddr, user_id: exists._id });
-                timesheetExists = await Timesheet.findOne({$and:[{date:currentDate}, {user_id:exists._id}]});
+                ipExists = await Ip.findOne({ ip_address: ipAddr, user_id: exists.id });
+                timesheetExists = await Timesheet.findOne({$and:[{date:currentDate}, {user_id:exists.id}]});
                 if(timesheetExists == null || timesheetExists == undefined){
                     if (ipExists) {
-                        await Timesheet.create({ date: currentDate, user_id: exists._id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
+                        await Timesheet.create({ date: currentDate, user_id: exists.id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
                     } else {
                         const otp = (Math.floor(100000 + Math.random() * 900000)).toString();
                         emailHelper.otpMail(exists.email, otp);
                         await Otp.create({ otp });
                         verifyFlag = true;
-                        await Timesheet.create({ date: currentDate, user_id: exists._id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
+                        await Timesheet.create({ date: currentDate, user_id: exists.id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
                     }
                 }
                 return res.status(200).json({ token, username: exists.username, isOrgId: orgFlag, isVerificationRequired: verifyFlag });
@@ -166,10 +166,10 @@ const verifyOtp = async (req, res) =>{
             }if(os.type() == 'Windows_NT'){
                 if(os.networkInterfaces().Ethernet != null){
                     ipAddr = os.networkInterfaces().Ethernet.filter((e) => e.family === 'IPv4')[0].address;
-                    ipExists = await Ip.findOne({$and:[{ip_address:ipAddr}, {user_id:exists._id}]});
+                    ipExists = await Ip.findOne({$and:[{ip_address:ipAddr}, {user_id:exists.id}]});
                 }else{
                     ipAddr = os.networkInterfaces()['Wi-Fi'].filter((e) => e.family === 'IPv4')[0].address;
-                    ipExists = await Ip.findOne({$and:[{ip_address:ipAddr}, {user_id:exists._id}]});
+                    ipExists = await Ip.findOne({$and:[{ip_address:ipAddr}, {user_id:exists.id}]});
                 }
             }
             await Ip.create({ip_address:ipAddr, user_id:req.user.id});
@@ -251,7 +251,7 @@ const assignReportingPerson = async(req, res)=>{
     const {username, reportingPerson} = req.body;
     try{
         const findReportingPerson = await User.findOne({username:reportingPerson});
-        await User.updateMany({username:username},{reporting_person:findReportingPerson._id});
+        await User.updateMany({username:username},{reporting_person:findReportingPerson.id});
         return res.status(301).json({message:'Reporting Persons assigned'});
     }catch(error){
         console.log(error);

@@ -11,7 +11,7 @@ const createOrg = async(req, res)=>{
             const creator = await Org.create({org_name:orgName, org_type:orgType, org_prefix:orgPrefix});
             const updateExists = await User.findById(req.user.id);
             if(updateExists){
-                await updateExists.updateOne({$set:{org_id: creator._id}});
+                await updateExists.updateOne({$set:{org_id: creator.id}});
             }
             res.status(200).json({message:'Org Created', creator});
         }
