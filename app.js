@@ -1,4 +1,6 @@
 const express = require('express');
+const session = require('express-session');
+const User = require('./model/userModel');
 const path = require('path');
 const cors = require('cors');
 require('./config/mongoConnector');
@@ -10,14 +12,31 @@ const emailRouting = require('./routes/emailRoute');
 const taskRouting = require('./routes/taskRoute');
 const commentRouting = require('./routes/commentRoute');
 const leaveRouting = require('./routes/leaveRoute');
-const attendanceRouting = require('./routes/attendanceRoute');
+const timesheetRouting = require('./routes/timesheetRoute');
 
 const app = express();
+
+app.use(session({
+    secret:process.env.SECRET_KEY,
+    resave: false,
+    saveUninitialized: true,
+}));
 
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(passport.initialize());
+app.use(passport.session());
 app.use(cors());
+
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+  
+passport.deserializeUser(async (id, done) => {
+    const user = await User.findById(id);
+    done(null, user);
+});
+
 
 
 app.use('/user', userRouting);
@@ -27,7 +46,7 @@ app.use('/email', emailRouting);
 app.use('/task', taskRouting);
 app.use('/comment', commentRouting);
 app.use('/leave', leaveRouting);
-app.use('/attendance', attendanceRouting);
+app.use('/timesheet', timesheetRouting);
 
 
 

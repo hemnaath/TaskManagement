@@ -128,7 +128,7 @@ const login = async (req, res) => {
                     os.networkInterfaces()['Wi-Fi'].find(e => e.family === 'IPv4').address;
                 }
                 const timezone = { hour12: false, timeZone: 'Asia/Kolkata' };
-                const currentDate = new Date().toLocaleDateString();
+                const currentDate = new Date().toISOString().split('T')[0];
                 const currentTime = new Date().toLocaleTimeString('en-IN', timezone);
                 ipExists = await Ip.findOne({ ip_address: ipAddr, user_id: exists.id });
                 timesheetExists = await Timesheet.findOne({$and:[{date:currentDate}, {user_id:exists.id}]});
@@ -189,7 +189,7 @@ const logout = async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
         if (authHeader) {
-            const exists = await Timesheet.findOne({ user_id: req.user.id, date: new Date().toLocaleDateString()});
+            const exists = await Timesheet.findOne({ user_id: req.user.id, date: new Date().toISOString().split('T')[0]});
             if (exists) {
                 const currentTime = new Date().toLocaleTimeString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata' });
                 await exists.updateOne({$set:{out_time:currentTime}});
@@ -228,7 +228,7 @@ const uploadDp = async(req, res)=>{
 }
 
 async function tsWorkedHrs(id) {
-    const exists = await Timesheet.findOne({ user_id: id, date: new Date().toLocaleDateString() });
+    const exists = await Timesheet.findOne({ user_id: id, date: new Date().toISOString().split('T')[0] });
     if (exists) {
         const outTime = exists.out_time.split(':');
         const inTime = exists.in_time.split(':');
@@ -242,7 +242,9 @@ async function tsWorkedHrs(id) {
             min += 60;
             hrs -= 1;
         }
-        let timeDiff = hrs + ':' + min;
+        const formattedHrs = hrs < 10 ? `0${hrs}` : hrs;
+        const formattedMin = min < 10 ? `0${min}` : min;
+        let timeDiff = formattedHrs + ':' + formattedMin;
         await exists.updateOne({ $set: { worked_hours: timeDiff } });
     }
 }

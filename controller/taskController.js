@@ -32,7 +32,7 @@ const updateTask = async(req, res) =>{
         const exists = await Task.findById(taskId);
         if (exists) {
             if (status === 'Accepted') {
-                startDate = new Date();
+                startDate = new Date().toISOString().split('T')[0];
             }
             const findUser = await User.findOne({ username: assigned });
             assignedTo = findUser.id;
