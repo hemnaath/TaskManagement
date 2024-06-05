@@ -10,8 +10,6 @@ const userSchema = new mongoose.Schema({
     reporting_person:{type:mongoose.Schema.Types.ObjectId, default:null},
     filename:{type:String, default:null},
     filepath:{type:String, default:null},
-    filetype:{type:String, default:null},
-    filesize:{type:String, default:null},
     casual_leave:{type:Number, default:null},
     sick_leave:{type:Number, default:null},
     permission:{type:Number, default:null}

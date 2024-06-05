@@ -15,52 +15,68 @@ const teamTimesheetData = async (req, res) => {
         const currentDate = new Date().toISOString().split('T')[0];
         const localId = ObjectId.createFromHexString(req.user.id);
         const checkedInData = [
-            {
-              '$lookup': {
-                'from': 'timesheets', 
-                'localField': '_id', 
-                'foreignField': 'user_id', 
-                'as': 'result'
-              }
-            }, {
-              '$unwind': {
-                'path': '$result'
-              }
-            }, {
-              '$match': {
-                'result.date': currentDate
-              }
-            }, {
-              '$match': {
-                'reporting_person': localId
-              }
-            }, {
-              '$unset': [
-                'password', 'email', 'role', 'createdAt', 'updatedAt', '__v', 'casual_leave', 'sick_leave', 'permission', 'reporting_person', 'result'
-              ]
-            }
-        ]
+			{
+			  '$lookup': {
+				'from': 'timesheets', 
+				'localField': '_id', 
+				'foreignField': 'user_id', 
+				'as': 'result'
+			  }
+			}, {
+			  '$unwind': {
+				'path': '$result'
+			  }
+			}, {
+			  '$match': {
+				'result.date': '2024-06-05'
+			  }
+			}, {
+			  '$match': {
+				'reporting_person': new ObjectId('66605b8e7695a9c4f796fa34')
+			  }
+			}, {
+			  '$set': {
+				'image_path': {
+				  '$concat': [
+					'http://localhost:1731/', '$filepath'
+				  ]
+				}
+			  }
+			}, {
+			  '$unset': [
+				'name', 'org_id', 'filename', 'filepath', 'password', 'email', 'role', 'createdAt', 'updatedAt', '__v', 'casual_leave', 'sick_leave', 'permission', 'reporting_person', 'result'
+			  ]
+			}
+		  ]
         const notCheckedInData = [
-            {
-                '$lookup': {
-                    'from': 'timesheets',
-                    'localField': '_id',
-                    'foreignField': 'user_id',
-                    'as': 'timesheets'
-                }
-            },
-            {
-                '$match': {
-                    'timesheets.date': { '$ne': currentDate },
-                    'reporting_person': localId
-                }
-            },
-            {
-                '$unset': [
-                    'password', 'email', 'role', 'createdAt', 'updatedAt', '__v', 'casual_leave', 'sick_leave', 'permission', 'reporting_person', 'timesheets'
-                ]
-            }
-        ];
+			{
+			  '$lookup': {
+				'from': 'timesheets', 
+				'localField': '_id', 
+				'foreignField': 'user_id', 
+				'as': 'timesheets'
+			  }
+			}, {
+			  '$match': {
+				'timesheets.date': {
+				  '$ne': currentDate
+				}, 
+				'reporting_person': localId
+			  }
+			}, {
+			  '$set': {
+				'image_path': {
+				  '$concat': [
+					'http://localhost:1731/', '$filepath'
+				  ]
+				}
+			  }
+			}, {
+			  '$unset': [
+				'name', 'password', 'email', 'role', 'org_id', 'reporting_person', 'filename', 'filepath', 'casual_leave', 'sick_leave', 'permission', 'createdAt', 'updatedAt', 'timesheets', '__v'
+			  ]
+			}
+		  ]
         const client = await MongoClient.connect('mongodb://localhost:27017/');
 
         const userCollection = client.db('CRM').collection('users');
@@ -75,7 +91,7 @@ const teamTimesheetData = async (req, res) => {
 
         return res.status(200).json({checkedIn:checkedIn, yetToCheckIn:yetToCheckIn});
     } catch (error) {
-        console.error("Error:", error);
+        console.error('Error:', error);
         return res.status(500).json({ error: 'Internal server error' });
     }
 }
