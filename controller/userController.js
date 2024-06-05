@@ -7,6 +7,8 @@ const Ip = require('../model/ipModel');
 const User = require('../model/userModel');
 const Timesheet = require('../model/timesheetModel');
 const {jwtDecode} = require('jwt-decode');
+const Jimp = require('jimp');
+const path = require('path');
 
 
 
@@ -23,7 +25,8 @@ const register = async (req, res) => {
             return res.status(409).json({ error: 'User Already Exists' });
         }
         const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
-        const newUser = await User.create({ name, username, password: encryptedPassword, email, role: 'admin' });
+        const defaultImgName = await addDefaultImage(username, username);
+        const newUser = await User.create({ name, username, password: encryptedPassword, email, role: 'admin', filename:defaultImgName, filepath:`uploads/${defaultImgName}` });
         const token = generateToken({ name, username, email });
         const verificationUrl = process.env.VERIFICATION + token;
         emailHelper.verificationEmail(email, verificationUrl, username);
@@ -208,11 +211,9 @@ const uploadDp = async(req, res)=>{
     try{
         const exists = User.findById(userId);
         if(exists){
-            const updater = await exists.updateOne({$set:{
+            await exists.updateOne({$set:{
                 filename: req.file.originalname,
                 filepath: req.file.path,
-                filetype: req.file.mimetype,
-                filesize: req.file.size
             }});
             if(req.file.size <= 1024 * 1024){
                 return res.status(200).json({message:'Image Uploaded'});
@@ -221,6 +222,18 @@ const uploadDp = async(req, res)=>{
             }
         }
         return res.status(404).json({message:'User not Found'});
+    }catch(error){
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
+    }
+}
+
+const assignReportingPerson = async(req, res)=>{
+    const {username, reportingPerson} = req.body;
+    try{
+        const findReportingPerson = await User.findOne({username:reportingPerson});
+        await User.updateMany({username:username},{reporting_person:findReportingPerson.id});
+        return res.status(301).json({message:'Reporting Persons assigned'});
     }catch(error){
         console.log(error);
         return res.status(500).json({error:'Internal Server Error'});
@@ -249,17 +262,23 @@ async function tsWorkedHrs(id) {
     }
 }
 
-const assignReportingPerson = async(req, res)=>{
-    const {username, reportingPerson} = req.body;
+async function addDefaultImage(firstName, lastName) {
     try{
-        const findReportingPerson = await User.findOne({username:reportingPerson});
-        await User.updateMany({username:username},{reporting_person:findReportingPerson.id});
-        return res.status(301).json({message:'Reporting Persons assigned'});
+        const font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE); 
+        const imagePath = path.join(__dirname, '..', 'uploads', 'avatar.png');
+        const image = await Jimp.read(imagePath);
+        const firstLetterFirstName = firstName.charAt(0).toUpperCase();
+        const firstLetterLastName = lastName.charAt(0).toUpperCase();
+        const initials = firstLetterFirstName + firstLetterLastName;
+        image.print(font,10,10,initials);
+        await image.writeAsync(path.join(__dirname, '..', 'uploads', `${firstName}.${lastName}.jpg`));
+        return `${firstName}.${lastName}.jpg`;
     }catch(error){
-        console.log(error);
-        return res.status(500).json({error:'Internal Server Error'});
+        console.error(error);
+        return res.status(500).json({error:'Internal server error'});
     }
 }
+
 
 
 module.exports={
