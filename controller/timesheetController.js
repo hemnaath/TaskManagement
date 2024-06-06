@@ -28,11 +28,11 @@ const teamTimesheetData = async (req, res) => {
 			  }
 			}, {
 			  '$match': {
-				'result.date': '2024-06-05'
+				'result.date': currentDate
 			  }
 			}, {
 			  '$match': {
-				'reporting_person': new ObjectId('66605b8e7695a9c4f796fa34')
+				'reporting_person': localId
 			  }
 			}, {
 			  '$set': {
@@ -77,7 +77,7 @@ const teamTimesheetData = async (req, res) => {
 			  ]
 			}
 		  ]
-        const client = await MongoClient.connect('mongodb://localhost:27017/');
+        const client = await MongoClient.connect('mongodb+srv://RS-Tech:Insideout%4018!!@cluster0.4u4yuef.mongodb.net/');
 
         const userCollection = client.db('CRM').collection('users');
 
