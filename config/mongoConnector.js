@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
+require('dotenv').config()
 
 
-mongoose.connect('mongodb+srv://RS_TECH_DEV:rstechdev@cluster0.4u4yuef.mongodb.net/CRM');
+mongoose.connect(process.env.DB_CONNECT);
 console.log("Database Connected");
 
 
