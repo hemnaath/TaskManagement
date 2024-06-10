@@ -11,7 +11,7 @@ const authenticate = passport.authenticate('jwt', { session: false });
 router.post('/register', createRateLimiter(10 * 60 * 1000, 50), userController.register);
 router.post('/login', createRateLimiter(10 * 60 * 1000, 100), userController.login);
 router.patch('/dp-upload', authenticate, upload.single('File'), createRateLimiter(10 * 60 * 1000, 50), userController.uploadDp);
-router.put('/reset-password', createRateLimiter(10 * 60 * 1000, 50), userController.changePassword);
+router.patch('/reset-password', createRateLimiter(10 * 60 * 1000, 50), userController.changePassword);
 router.post('/forget-password', createRateLimiter(10 * 60 * 1000, 50), userController.forgetPassword);
 router.get('/get-dp', authenticate, createRateLimiter(10 * 60 * 1000, 50), userController.getDp);
 router.post('/logout', authenticate, createRateLimiter(10 * 60 * 1000, 100), userController.logout);

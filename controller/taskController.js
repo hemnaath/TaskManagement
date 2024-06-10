@@ -5,13 +5,13 @@ const Org = require('../model/orgModel');
 
 const createTask = async (req, res) => {
     const projectId = req.params.id;
-    const { taskTitle, taskType, parentTask } = req.body;
+    const { taskTitle, taskType } = req.body;
     try{
         const exists = await Task.findOne({task_title:taskTitle});
             if (exists) {
                 return res.status(400).json({message:'Task with the same title already exists'});
             } else {
-                const newTask = await Task.create({task_title:taskTitle, task_type:taskType, created_by:req.user.id, project_id:projectId, parent_task:parentTask});
+                const newTask = await Task.create({task_title:taskTitle, task_type:taskType, created_by:req.user.id, project_id:projectId});
                 return res.status(201).json({message:'Task Created', newTask});
             }
     }catch(error){
@@ -24,7 +24,7 @@ const updateTask = async(req, res) =>{
     const taskId = req.params.id;
     let assignedTo = null;
     let startDate = null;
-    const { taskTitle, description, notes, assigned, status, priority, releaseVersion, effortEstimation } = req.body;
+    const { taskTitle, description, notes, assigned, status, priority, releaseVersion, effortEstimation, parentTask } = req.body;
     try {
         if (!req.file || !req.file.originalname || !req.file.path) {
             return res.status(400).json({ message: 'File not uploaded or invalid file' });
@@ -36,7 +36,7 @@ const updateTask = async(req, res) =>{
             }
             const findUser = await User.findOne({ username: assigned });
             assignedTo = findUser.id;
-            await exists.updateOne({ $set: { task_title: taskTitle, description, notes, assigned_to: assignedTo, status, created_by: req.user.id, priority, release_version: releaseVersion, start_date: startDate, effort_estimation: effortEstimation, filename: req.file.originalname, filepath: req.file.path } });
+            await exists.updateOne({ $set: { task_title: taskTitle, description, notes, assigned_to: assignedTo, status, created_by: req.user.id, priority, release_version: releaseVersion, start_date: startDate, effort_estimation: effortEstimation, parent_task:parentTask, filename: req.file.originalname, filepath: req.file.path } });
             return res.status(201).json({ message: 'Task Updated' });
         } else {
             return res.status(400).json({ message: 'No task exists' });

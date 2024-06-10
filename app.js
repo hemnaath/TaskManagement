@@ -39,14 +39,14 @@ passport.deserializeUser(async (id, done) => {
 
 
 
-app.use('/user', userRouting);
-app.use('/project', projectRouting);
-app.use('/org', orgRouting);
-app.use('/email', emailRouting);
-app.use('/task', taskRouting);
-app.use('/comment', commentRouting);
-app.use('/leave', leaveRouting);
-app.use('/timesheet', timesheetRouting);
+app.use('/api', userRouting);
+app.use('/api', projectRouting);
+app.use('/api', orgRouting);
+app.use('/api', emailRouting);
+app.use('/api', taskRouting);
+app.use('/api', commentRouting);
+app.use('/api', leaveRouting);
+app.use('/api', timesheetRouting);
 
 
 

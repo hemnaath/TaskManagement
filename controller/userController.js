@@ -121,7 +121,7 @@ const login = async (req, res) => {
             const comparePassword = await compass(password, exists.password);
             if (comparePassword) {
                 token = generateToken({ role: exists.role, id: exists.id, org: exists.org_id });
-                if (exists.orgId) {
+                if (exists.org_id) {
                     orgFlag = true;
                 }
                 if (os.type() === 'Darwin') {
@@ -149,7 +149,6 @@ const login = async (req, res) => {
                 return res.status(200).json({ token, username: exists.username, isOrgId: orgFlag, isVerificationRequired: verifyFlag });
             }
         }
-
         return res.status(404).json({message:'User Not Found'});
     } catch (error) {
         console.error(error);

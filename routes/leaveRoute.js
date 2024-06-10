@@ -7,7 +7,7 @@ const createRateLimiter = require('../middleware/rateLimiter');
 const router = express.Router();
 const authenticateUser = passport.authenticate('jwt', { session: false });
 
-router.post('/reset', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), (req, res, next)=>{
+router.post('/reset-leave', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), (req, res, next)=>{
     if(req.user.role !== 'admin'){
         return res.status(403).json('Unauthorized Access');
     }
@@ -15,6 +15,6 @@ router.post('/reset', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), (
 }, leaveController.resetLeave);
 router.post('/apply-leave', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), leaveController.applyLeave);
 router.get('/leave-request', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), leaveController.leaveRequest);
-router.put('/approve-leave/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), leaveController.approveLeave);
+router.patch('/approve-leave/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), leaveController.approveLeave);
 
 module.exports = router;
