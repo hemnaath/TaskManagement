@@ -8,12 +8,12 @@ const transport = nodemailer.createTransport({
     }
 })
 
-const inviteMail = async(to)=>{
+const inviteMail = async(to, url)=>{
     await transport.sendMail({
         from:process.env.APP_EMAIL,
         to,
         subject:'Register Invitation',
-        text:'You have been invited to register with the portal with the link attached below'
+        text:'You have been invited to register with the portal with the link attached below'+' '+ `${url}`
     })
 }
 

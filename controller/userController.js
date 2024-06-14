@@ -13,21 +13,21 @@ const path = require('path');
 
 
 const register = async (req, res) => {
-    const { name, username, password, email } = req.body;
+    const { firstName, lastName, password, email } = req.body;
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-    
     try {
         if (!passwordRegex.test(password)) {
             return res.status(400).json({ error: 'Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.' });
         }
-        const existingUser = await User.findOne({$or:[{ email }, {username}]});
+        const existingUser = await User.findOne({email});
         if (existingUser) {
             return res.status(409).json({ error: 'User Already Exists' });
         }
         const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
-        const defaultImgName = await addDefaultImage(username, username);
-        const newUser = await User.create({ name, username, password: encryptedPassword, email, role: 'admin', filename:defaultImgName, filepath:`uploads/${defaultImgName}` });
-        const token = generateToken({ name, username, email });
+        const defaultImgName = await addDefaultImage(firstName, lastName);
+        const username = firstName + '.' + lastName;
+        const newUser = await User.create({ firstName, lastName, username:username, password: encryptedPassword, email, role: 'admin', filename:defaultImgName, filepath:`uploads/${defaultImgName}` });
+        const token = generateToken({ username, email });
         const verificationUrl = process.env.VERIFICATION + token;
         emailHelper.verificationEmail(email, verificationUrl, username);
         return res.status(201).json({ message: 'User Created', user: newUser });
@@ -36,79 +36,6 @@ const register = async (req, res) => {
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-
-
-const forgetPassword = async(req, res)=>{
-    const {email} = req.body;
-    try{
-        const token = generateToken({email:email});
-        const exists = await User.findOne({email:email});
-        const url = process.env.FORGET_PASSWORD+token;
-        await emailHelper.passwordReset(email, url, exists.username);
-        return res.status(200).json({message:'Password reset link sent'});
-    }catch(error){
-        console.log(error);
-        return res.status(500).json({error:'Internal Server Error'});
-    }
-}
-
-const changePassword = async(req, res)=>{
-    const {token, password} = req.body;
-    try{
-        decodedToken = jwtDecode(token);
-        if (!decodedToken) {
-            return res.status(400).json({message:'Invalid token'});
-        }
-        const emailId = decodedToken.payload.email;
-        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-        if (!passwordRegex.test(password)) {
-            return res.status(400).json({message:'Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.'});
-        }
-        const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
-        await User.updateOne({email:emailId},{$set:{password:encryptedPassword}});
-        return res.status(200).json({message:'Password updated'});
-    }catch(error){
-        console.log(error);
-        return res.status(500).json({error:'Internal Server Error'});
-    }
-}
-
-const inviteUser = async(req, res)=>{
-    const {name, username, password, email} = req.body;
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-    try{
-        if (!passwordRegex.test(password)) {
-            return res.status(400).json({message:'Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.'});
-        }
-        const exists = await User.findOne({email});
-        if (exists){
-            return res.status(409).json({message:'User Exists'});
-        }else {
-            const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
-            const findOrg = await User.findById(req.user.id);
-            const creator = await User.create({name, username, password:encryptedPassword, email, org_id:findOrg.org_id, role:'editor'});
-            return res.status(201).json({message:'User Created', creator});
-        }
-    }catch(error){
-        console.log(error);
-        return res.status(500).json({error:'Internal Server Error'});
-    }
-}
-
-const getDp = async(req, res)=>{
-    try{
-        const userId = req.user.id;
-        const exists = await User.findById(userId);
-        if(exists){
-            const imgLink = 'https://localhost:1731/' + exists.filepath;
-            return res.status(200).json({message:imgLink}); 
-        }
-        return res.status(404).json({message:'User not Found'});
-    }catch(error){
-        console.log(error);
-        return res.status(500).json({error:'Internal Server Error'});
-    }
-}
 
 const login = async (req, res) => {
     const { identifier, password } = req.body;
@@ -156,6 +83,118 @@ const login = async (req, res) => {
     }
 }
 
+const forgetPassword = async(req, res)=>{
+    const {email} = req.body;
+    try{
+        const token = generateToken({email:email});
+        const exists = await User.findOne({email:email});
+        const url = process.env.FORGET_PASSWORD+token;
+        await emailHelper.passwordReset(email, url, exists.username);
+        return res.status(200).json({message:'Password reset link sent'});
+    }catch(error){
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
+    }
+}
+
+const resetPassword = async(req, res)=>{
+    const {token, password} = req.body;
+    try{
+        decodedToken = jwtDecode(token);
+        if (!decodedToken) {
+            return res.status(400).json({message:'Invalid token'});
+        }
+        const emailId = decodedToken.payload.email;
+        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({message:'Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.'});
+        }
+        const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
+        await User.updateOne({email:emailId},{$set:{password:encryptedPassword}});
+        return res.status(200).json({message:'Password updated'});
+    }catch(error){
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
+    }
+}
+
+const sendInvite = async(req, res)=>{
+    const {to} = req.body;
+    const token = generateToken(req.user.org_id);
+    const url = process.env.SEND_INVITE+token;
+    await emailHelper.inviteMail(to, url);
+    return res.status(200).json({message:'Invite sent'});
+}
+
+const inviteUser = async(req, res)=>{
+    const {firstName, lastName, password, email} = req.body;
+    const tokens = req.query.token;
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    try{
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({message:'Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.'});
+        }
+        const exists = await User.findOne({email});
+        if (exists){
+            return res.status(409).json({message:'User Exists'});
+        }else {
+            decodedToken = jwtDecode(tokens);
+            if (!decodedToken) {
+                return res.status(400).json({message:'Invalid token'});
+            }
+            const orgId = decodedToken.payload;
+            const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
+            const defaultImgName = await addDefaultImage(firstName, lastName);
+            const username = firstName + '.' + lastName;
+            const newUser = await User.create({ username:username, password: encryptedPassword, org_id:orgId, email, role: 'editor', filename:defaultImgName, filepath:`uploads/${defaultImgName}` });
+            const token = generateToken({ username, email });
+            const verificationUrl = process.env.VERIFICATION + token;
+            emailHelper.verificationEmail(email, verificationUrl, username);
+            return res.status(201).json({ message: 'User Created', user: newUser });
+        }
+    }catch(error){
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
+    }
+}
+
+const uploadDp = async(req, res)=>{
+    const userId = req.user.id;
+    try{
+        const exists = User.findById(userId);
+        if(exists){
+            await exists.updateOne({$set:{
+                filename: req.file.originalname,
+                filepath: req.file.path,
+            }});
+            if(req.file.size <= 1024 * 1024){
+                return res.status(200).json({message:'Image Uploaded'});
+            }else{
+                return res.status(400).json({message:'Image Size too Large'});
+            }
+        }
+        return res.status(404).json({message:'User not Found'});
+    }catch(error){
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
+    }
+}
+
+const getDp = async(req, res)=>{
+    try{
+        const userId = req.user.id;
+        const exists = await User.findById(userId);
+        if(exists){
+            const imgLink = 'https://localhost:1731/' + exists.filepath;
+            return res.status(200).json({message:imgLink}); 
+        }
+        return res.status(404).json({message:'User not Found'});
+    }catch(error){
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
+    }
+}
+
 const verifyOtp = async (req, res) =>{
     const {otp} = req.body;
     try{
@@ -187,6 +226,20 @@ const verifyOtp = async (req, res) =>{
     
 }
 
+const assignReportingPerson = async(req, res)=>{
+    const {userId, reportingPersonId} = req.body;
+    try{
+        const exists = await User.findById(reportingPersonId);
+        if(exists){
+            await User.updateMany({_id:userId},{reporting_person:reportingPersonId});
+            return res.status(301).json({message:'Reporting Persons assigned'});
+        }
+    }catch(error){
+        console.log(error);
+        return res.status(500).json({error:'Internal Server Error'});
+    }
+}
+
 const logout = async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
@@ -200,40 +253,6 @@ const logout = async (req, res) => {
         }
         await tsWorkedHrs(req.user.id);
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({error:'Internal Server Error'});
-    }
-}
-
-const uploadDp = async(req, res)=>{
-    const userId = req.user.id;
-    try{
-        const exists = User.findById(userId);
-        if(exists){
-            await exists.updateOne({$set:{
-                filename: req.file.originalname,
-                filepath: req.file.path,
-            }});
-            if(req.file.size <= 1024 * 1024){
-                return res.status(200).json({message:'Image Uploaded'});
-            }else{
-                return res.status(400).json({message:'Image Size too Large'});
-            }
-        }
-        return res.status(404).json({message:'User not Found'});
-    }catch(error){
-        console.log(error);
-        return res.status(500).json({error:'Internal Server Error'});
-    }
-}
-
-const assignReportingPerson = async(req, res)=>{
-    const {username, reportingPerson} = req.body;
-    try{
-        const findReportingPerson = await User.findOne({username:reportingPerson});
-        await User.updateMany({username:username},{reporting_person:findReportingPerson.id});
-        return res.status(301).json({message:'Reporting Persons assigned'});
-    }catch(error){
         console.log(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
@@ -281,10 +300,15 @@ async function addDefaultImage(firstName, lastName) {
 
 
 module.exports={
-    register,login,logout,
+    register,
+    login,
+    forgetPassword,
+    resetPassword,
+    sendInvite,
+    inviteUser,
     uploadDp,
     getDp,
-    inviteUser,verifyOtp,
+    verifyOtp,
     assignReportingPerson,
-    forgetPassword,changePassword,
+    logout,
 }
