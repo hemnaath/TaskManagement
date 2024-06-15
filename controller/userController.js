@@ -1,6 +1,7 @@
 const {passcrypt, compass} = require('../helper/passwordHelper');
 const {generateToken} = require('../helper/tokenHelper');
 const emailHelper = require('../helper/emailHelper');
+const fs = require('fs').promises;
 const Otp = require('../model/otpModel');
 const os = require('os');
 const Ip = require('../model/ipModel');
@@ -161,12 +162,11 @@ const inviteUser = async(req, res)=>{
 const uploadDp = async(req, res)=>{
     const userId = req.user.id;
     try{
-        const exists = User.findById(userId);
+        const exists = await User.findById(userId);
         if(exists){
-            await exists.updateOne({$set:{
-                filename: req.file.originalname,
-                filepath: req.file.path,
-            }});
+            const defaultImagePath = process.env.DEFAULT_IMAGE_PATH + exists.filepath;
+            await fs.unlink(defaultImagePath);
+            await exists.updateOne({$set:{filename: req.file.originalname, filepath: req.file.path}});
             if(req.file.size <= 1024 * 1024){
                 return res.status(200).json({message:'Image Uploaded'});
             }else{
