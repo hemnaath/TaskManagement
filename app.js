@@ -8,7 +8,6 @@ const passport = require('./middleware/auth');
 const userRouting = require('./routes/userRoute');
 const projectRouting = require('./routes/projectRoute');
 const orgRouting = require('./routes/orgRoute');
-const emailRouting = require('./routes/emailRoute');
 const taskRouting = require('./routes/taskRoute');
 const commentRouting = require('./routes/commentRoute');
 const leaveRouting = require('./routes/leaveRoute');
@@ -42,7 +41,6 @@ passport.deserializeUser(async (id, done) => {
 app.use('/api', userRouting);
 app.use('/api', projectRouting);
 app.use('/api', orgRouting);
-app.use('/api', emailRouting);
 app.use('/api', taskRouting);
 app.use('/api', commentRouting);
 app.use('/api', leaveRouting);
