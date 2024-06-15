@@ -39,12 +39,12 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
-    const { identifier, password } = req.body;
+    const { email, password } = req.body;
     try {
         let token, ipAddr, ipExists, timesheetExists = null;
         let orgFlag = false;
         let verifyFlag = false;
-        const exists = await User.findOne({ $or: [{ email: identifier }, { username: identifier }] });
+        const exists = await User.findOne({email});
         if (exists) {
             const comparePassword = await compass(password, exists.password);
             if (comparePassword) {
