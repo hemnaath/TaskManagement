@@ -282,13 +282,13 @@ async function tsWorkedHrs(id) {
 
 async function addDefaultImage(firstName, lastName) {
     try{
-        const font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE); 
+        const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE); 
         const imagePath = path.join(__dirname, '..', 'uploads', 'avatar.png');
         const image = await Jimp.read(imagePath);
         const firstLetterFirstName = firstName.charAt(0).toUpperCase();
         const firstLetterLastName = lastName.charAt(0).toUpperCase();
         const initials = firstLetterFirstName + firstLetterLastName;
-        image.print(font,10,10,initials);
+        image.print(font,20,32,initials);
         await image.writeAsync(path.join(__dirname, '..', 'uploads', `${firstName}.${lastName}.jpg`));
         return `${firstName}.${lastName}.jpg`;
     }catch(error){
