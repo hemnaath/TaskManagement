@@ -25,9 +25,11 @@ const register = async (req, res) => {
             return res.status(409).json({ error: 'User Already Exists' });
         }
         const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
-        const defaultImgName = await addDefaultImage(firstName, lastName);
+        const srcImagePath = path.join(__dirname, '..', 'uploads/profile_picture', 'avatar.png');
+        const destImagePath = path.join(__dirname, '..', 'uploads/profile_picture', `${firstName}.${lastName}.jpg`)
+        const defaultImgName = await addDefaultImage(firstName, lastName, srcImagePath, destImagePath);
         const username = firstName + '.' + lastName;
-        const newUser = await User.create({ firstName, lastName, username:username, password: encryptedPassword, email, role: 'admin', filename:defaultImgName, filepath:`uploads/${defaultImgName}` });
+        const newUser = await User.create({ firstName, lastName, username:username, password: encryptedPassword, email, role: 'admin', filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}` });
         const token = generateToken({ username, email });
         const verificationUrl = process.env.VERIFICATION + token;
         emailHelper.verificationEmail(email, verificationUrl, username);
@@ -145,9 +147,11 @@ const inviteUser = async(req, res)=>{
             }
             const orgId = decodedToken.payload;
             const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
-            const defaultImgName = await addDefaultImage(firstName, lastName);
+            const srcImagePath = path.join(__dirname, '..', 'uploads/profile_picture', 'avatar.png');
+            const destImagePath = path.join(__dirname, '..', 'uploads/profile_picture', `${firstName}.${lastName}.jpg`)
+            const defaultImgName = await addDefaultImage(firstName, lastName, srcImagePath, destImagePath);
             const username = firstName + '.' + lastName;
-            const newUser = await User.create({ username:username, password: encryptedPassword, org_id:orgId, email, role: 'editor', filename:defaultImgName, filepath:`uploads/${defaultImgName}` });
+            const newUser = await User.create({ username:username, password: encryptedPassword, org_id:orgId, email, role: 'editor', filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}` });
             const token = generateToken({ username, email });
             const verificationUrl = process.env.VERIFICATION + token;
             emailHelper.verificationEmail(email, verificationUrl, username);
@@ -164,9 +168,9 @@ const uploadDp = async(req, res)=>{
     try{
         const exists = await User.findById(userId);
         if(exists){
-            const defaultImagePath = process.env.DEFAULT_IMAGE_PATH + exists.filepath;
-            await fs.unlink(defaultImagePath);
-            await exists.updateOne({$set:{filename: req.file.originalname, filepath: req.file.path}});
+            const existingImagePath = process.env.EXISTING_IMAGE_PATH + exists.filepath;
+            await fs.unlink(existingImagePath);
+            await exists.updateOne({$set:{filename: req.file.originalname, filepath: 'uploads/profile_picture/' + `${req.file.originalname}`}});
             if(req.file.size <= 1024 * 1024){
                 return res.status(200).json({message:'Image Uploaded'});
             }else{
@@ -280,16 +284,15 @@ async function tsWorkedHrs(id) {
     }
 }
 
-async function addDefaultImage(firstName, lastName) {
+async function addDefaultImage(firstName, lastName, srcImagePath, destImagePath) {
     try{
-        const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE); 
-        const imagePath = path.join(__dirname, '..', 'uploads', 'avatar.png');
-        const image = await Jimp.read(imagePath);
+        const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE);
+        const image = await Jimp.read(srcImagePath);
         const firstLetterFirstName = firstName.charAt(0).toUpperCase();
         const firstLetterLastName = lastName.charAt(0).toUpperCase();
         const initials = firstLetterFirstName + firstLetterLastName;
         image.print(font,20,32,initials);
-        await image.writeAsync(path.join(__dirname, '..', 'uploads', `${firstName}.${lastName}.jpg`));
+        await image.writeAsync(destImagePath);
         return `${firstName}.${lastName}.jpg`;
     }catch(error){
         console.error(error);
