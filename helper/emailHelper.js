@@ -17,15 +17,6 @@ const inviteMail = async(to, url)=>{
     })
 }
 
-const otpMail = async(to, text)=>{
-    await transport.sendMail({
-        from:process.env.APP_EMAIL,
-        to,
-        subject:'OTP verification',
-        text,
-    })
-}
-
 const verificationEmail = async(to, url, username)=>{
     await transport.sendMail({
         from:process.env.APP_EMAIL,
@@ -61,4 +52,4 @@ const passwordReset = async(to, url, username)=>{
     })
 }
 
-module.exports = {inviteMail, otpMail, verificationEmail, passwordReset};
+module.exports = {inviteMail, verificationEmail, passwordReset};

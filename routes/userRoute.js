@@ -17,7 +17,6 @@ router.get('/get-dp', authenticate, createRateLimiter(10 * 60 * 1000, 50), userC
 router.post('/logout', authenticate, createRateLimiter(10 * 60 * 1000, 100), userController.logout);
 router.post('/invite-user', userController.inviteUser);
 router.post('/send-invite', authenticate, createRateLimiter(10 * 60 * 1000, 100), userController.sendInvite);
-router.post('/verify-otp', authenticate, createRateLimiter(10 * 60 * 1000, 50), userController.verifyOtp);
 router.patch('/assign-reporting-person', authenticate, createRateLimiter(10 * 60 * 1000, 50), (req, res, next)=>{
     if(req.user.role !== 'admin'){
         return res.status(403).json('Unauthorized Access');

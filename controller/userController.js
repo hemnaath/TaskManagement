@@ -2,9 +2,6 @@ const {passcrypt, compass} = require('../helper/passwordHelper');
 const {generateToken} = require('../helper/tokenHelper');
 const emailHelper = require('../helper/emailHelper');
 const fs = require('fs').promises;
-const Otp = require('../model/otpModel');
-const os = require('os');
-const Ip = require('../model/ipModel');
 const User = require('../model/userModel');
 const Timesheet = require('../model/timesheetModel');
 const {jwtDecode} = require('jwt-decode');
@@ -54,27 +51,12 @@ const login = async (req, res) => {
                 if (exists.org_id) {
                     orgFlag = true;
                 }
-                if (os.type() === 'Darwin') {
-                    ipAddr = os.networkInterfaces().en0.find(e => e.family === 'IPv4').address;
-                } else if (os.type() === 'Windows_NT') {
-                    ipAddr = os.networkInterfaces().Ethernet ? os.networkInterfaces().Ethernet.find(e => e.family === 'IPv4').address :
-                    os.networkInterfaces()['Wi-Fi'].find(e => e.family === 'IPv4').address;
-                }
                 const timezone = { hour12: false, timeZone: 'Asia/Kolkata' };
                 const currentDate = new Date().toISOString().split('T')[0];
                 const currentTime = new Date().toLocaleTimeString('en-IN', timezone);
-                ipExists = await Ip.findOne({ ip_address: ipAddr, user_id: exists.id });
                 timesheetExists = await Timesheet.findOne({$and:[{date:currentDate}, {user_id:exists.id}]});
                 if(timesheetExists == null || timesheetExists == undefined){
-                    if (ipExists) {
-                        await Timesheet.create({ date: currentDate, user_id: exists.id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
-                    } else {
-                        const otp = (Math.floor(100000 + Math.random() * 900000)).toString();
-                        emailHelper.otpMail(exists.email, otp);
-                        await Otp.create({ otp });
-                        verifyFlag = true;
-                        await Timesheet.create({ date: currentDate, user_id: exists.id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
-                    }
+                    await Timesheet.create({ date: currentDate, user_id: exists.id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
                 }
                 return res.status(200).json({ token, username: exists.username, isOrgId: orgFlag, isVerificationRequired: verifyFlag });
             }
@@ -199,37 +181,6 @@ const getDp = async(req, res)=>{
     }
 }
 
-const verifyOtp = async (req, res) =>{
-    const {otp} = req.body;
-    try{
-        let ipAddr, ipExists = null;
-        const exists = await Otp.findOne({otp:otp});
-        if(exists){
-            if(os.type() == 'Darwin'){
-                ipAddr = os.networkInterfaces().en0.filter((e) => e.family === 'IPv4')[0].address;
-                ipExists = await Ip.findOne({$and:[{ip_address:ipAddr}, {user_id:req.user.id}]});
-            }if(os.type() == 'Windows_NT'){
-                if(os.networkInterfaces().Ethernet != null){
-                    ipAddr = os.networkInterfaces().Ethernet.filter((e) => e.family === 'IPv4')[0].address;
-                    ipExists = await Ip.findOne({$and:[{ip_address:ipAddr}, {user_id:exists.id}]});
-                }else{
-                    ipAddr = os.networkInterfaces()['Wi-Fi'].filter((e) => e.family === 'IPv4')[0].address;
-                    ipExists = await Ip.findOne({$and:[{ip_address:ipAddr}, {user_id:exists.id}]});
-                }
-            }
-            await Ip.create({ip_address:ipAddr, user_id:req.user.id});
-            await Otp.deleteMany();
-            return res.status(200).json({message:'OTP Verified'});
-        }else{
-            return res.status(400).json({message:'Invalid OTP'});
-        }
-    }catch(error){
-        console.log(error);
-        return res.status(500).json({error:'Internal Server Error'});
-    }
-    
-}
-
 const assignReportingPerson = async(req, res)=>{
     const {userId, reportingPersonId} = req.body;
     try{
@@ -311,7 +262,6 @@ module.exports={
     inviteUser,
     uploadDp,
     getDp,
-    verifyOtp,
     assignReportingPerson,
     logout,
 }
