@@ -62,6 +62,11 @@ const deleteOrg = async(req, res)=>{
                 key.org_id = null;
                 await key.save();
             }
+            const orgProjects = await User.find({org_id:orgId});
+            for(let key of orgProjects){
+                key.org_id = null;
+                await key.save();
+            }
             return res.status(200).json({message:'Org deleted'});
         }
     }catch(error){
