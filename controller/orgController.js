@@ -57,6 +57,11 @@ const deleteOrg = async(req, res)=>{
         const exists = await Org.findById(orgId);
         if(exists){
             await exists.deleteOne();
+            const orgUsers = await User.find({org_id:orgId});
+            for(let key of orgUsers){
+                key.org_id = null;
+                await key.save();
+            }
             return res.status(200).json({message:'Org deleted'});
         }
     }catch(error){
