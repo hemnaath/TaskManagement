@@ -88,11 +88,14 @@ const teamTimesheetData = async (req, res) => {
         const yetToCheckIn = await yetToCheckInCursor.toArray();
 
         await client.close();
-
-        return res.status(200).json({checkedIn:checkedIn, yetToCheckIn:yetToCheckIn});
+		if (!res.headersSent){
+			return res.status(200).json({checkedIn:checkedIn, yetToCheckIn:yetToCheckIn});
+		}
     } catch (error) {
         console.error('Error:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+		if (!res.headersSent){
+			return res.status(500).json({ error: 'Internal server error' });
+		}
     }
 }
 

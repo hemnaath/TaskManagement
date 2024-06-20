@@ -7,6 +7,7 @@ const Timesheet = require('../model/timesheetModel');
 const {jwtDecode} = require('jwt-decode');
 const Jimp = require('jimp');
 const path = require('path');
+const {MongoClient} = require('mongodb')
 
 
 
@@ -40,7 +41,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     const { email, password } = req.body;
     try {
-        let token, ipAddr, ipExists, timesheetExists = null;
+        let token, timesheetExists = null;
         let orgFlag = false;
         let verifyFlag = false;
         const exists = await User.findOne({email});
@@ -58,7 +59,39 @@ const login = async (req, res) => {
                 if(timesheetExists == null || timesheetExists == undefined){
                     await Timesheet.create({ date: currentDate, user_id: exists.id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
                 }
-                return res.status(200).json({ token, username: exists.username, isOrgId: orgFlag, isVerificationRequired: verifyFlag });
+                const allowedPermissionPipeline = [
+                    {
+                      '$lookup': {
+                        'from': 'permissions', 
+                        'localField': 'role', 
+                        'foreignField': 'role', 
+                        'as': 'result'
+                      }
+                    }, {
+                      '$unwind': {
+                        'path': '$result'
+                      }
+                    }, {
+                      '$match': {
+                        'email': email
+                      }
+                    }, {
+                      '$project': {
+                        '_id': 0, 
+                        'permission': '$result.permission'
+                      }
+                    }
+                ];
+        
+                const client = await MongoClient.connect('mongodb+srv://RS-Tech:Insideout%4018!!@cluster0.4u4yuef.mongodb.net/');
+                const userCollection = client.db('CRM').collection('users');
+        
+                const permissionCursor = userCollection.aggregate(allowedPermissionPipeline);
+                const result = await permissionCursor.toArray();
+        
+                await client.close();
+
+                return res.status(200).json({ token, username: exists.username, isOrgId: orgFlag, isVerificationRequired: verifyFlag, allowedPermissions:result });
             }
         }
         return res.status(404).json({message:'User Not Found'});

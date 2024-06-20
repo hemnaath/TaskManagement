@@ -1,8 +1,7 @@
 const express = require('express');
-const orgController = require('../controller/orgController');
+const permissionController = require('../controller/permissionController');
 const passport = require('../middleware/auth');
 const createRateLimiter = require('../middleware/rateLimiter');
-
 
 const router = express.Router();
 const authenticateUser = passport.authenticate('jwt', { session: false });
@@ -19,9 +18,6 @@ const checkPermissionsMiddleware = (requiredPermission) => async (req, res, next
     }
 };
 
-router.post('/create-org', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('create_org'), orgController.createOrg);
-router.get('/get-org', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('get_org'), orgController.getOrg);
-router.patch('/update-org/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('update_org'), orgController.updateOrg);
-router.delete('/delete-org/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('delete_org'), orgController.deleteOrg);
+router.patch('/set-permission', createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('set_permission'), permissionController.setPermission);
 
 module.exports = router;
