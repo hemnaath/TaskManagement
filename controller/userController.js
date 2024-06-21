@@ -3,12 +3,13 @@ const {generateToken} = require('../helper/tokenHelper');
 const emailHelper = require('../helper/emailHelper');
 const fs = require('fs').promises;
 const User = require('../model/userModel');
+const jwt = require('jsonwebtoken');
 const Timesheet = require('../model/timesheetModel');
 const {jwtDecode} = require('jwt-decode');
 const Jimp = require('jimp');
 const path = require('path');
 const {MongoClient} = require('mongodb')
-
+require('dotenv').config();
 
 
 const register = async (req, res) => {
@@ -27,7 +28,7 @@ const register = async (req, res) => {
         const destImagePath = path.join(__dirname, '..', 'uploads/profile_picture', `${firstName}.${lastName}.jpg`)
         const defaultImgName = await addDefaultImage(firstName, lastName, srcImagePath, destImagePath);
         const username = firstName + '.' + lastName;
-        const newUser = await User.create({ firstName, lastName, username:username, password: encryptedPassword, email, role: 'admin', filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`,isVerified: false  });
+        const newUser = await User.create({ firstName, lastName, username:username, password: encryptedPassword, email, role: 'admin', filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`,is_Verified: false  });
         const token = generateToken({ username, email });
         const verificationUrl = process.env.VERIFICATION + token;
         emailHelper.verificationEmail(email, verificationUrl, username);
@@ -245,7 +246,35 @@ const logout = async (req, res) => {
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
+const verifyEmail = async (req, res) => {
+    const { token } = req.query;
+    console.log(`Received token: ${token}`);
+    if (!token) {
+        return res.status(400).json({ error: 'Token is missing' });
+    }
+    try {
+        const decoded = jwt.verify(token, process.env.SECRET_KEY);
+        const email = decoded.email;
 
+        console.log(`Decoded payload: ${JSON.stringify(decoded)}`);
+        const userdata = await User.findOne(email);
+        if (!userdata) {
+            return res.status(400).json({ error: 'Invalid token or user not found' });
+        }
+
+        if (userdata.isVerified) {
+            return res.status(400).json({ error: 'User is already verified' });
+        }
+
+        userdata.isVerified = true;
+        await userdata.save();
+
+        return res.status(200).json({ message: 'Email successfully verified' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+}
 async function tsWorkedHrs(id) {
     const exists = await Timesheet.findOne({ user_id: id, date: new Date().toISOString().split('T')[0] });
     if (exists) {
@@ -297,4 +326,5 @@ module.exports={
     getDp,
     assignReportingPerson,
     logout,
+    verifyEmail
 }

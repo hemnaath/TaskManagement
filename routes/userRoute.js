@@ -4,7 +4,6 @@ const passport = require('../middleware/auth');
 const { upload } = require('../helper/fileHelper');
 const createRateLimiter = require('../middleware/rateLimiter');
 const checkPermission = require('../middleware/checkPermission');
-const { verifyEmail } = require('../utils/verifyEmail');
 const router = express.Router();
 const authenticateUser = passport.authenticate('jwt', { session: false });
 
@@ -21,7 +20,7 @@ const checkPermissionsMiddleware = (requiredPermission) => async (req, res, next
 };
 
 router.post('/register', createRateLimiter(10 * 60 * 1000, 50), userController.register);
-router.get('/verify-email', verifyEmail);
+router.get('/verify-email', userController.verifyEmail);
 router.post('/login', createRateLimiter(10 * 60 * 1000, 100), userController.login);
 router.patch('/dp-upload', authenticateUser, upload.single('File'), createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('upload_dp'), userController.uploadDp);
 router.patch('/reset-password', createRateLimiter(10 * 60 * 1000, 50), userController.resetPassword);

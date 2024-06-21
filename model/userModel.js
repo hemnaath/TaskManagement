@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
     casual_leave:{type:Number, default:null},
     sick_leave:{type:Number, default:null},
     permission:{type:Number, default:null},
-    isVerified: { type: Boolean, default: false },
+    is_Verified: { type: Boolean, default: false },
 },
 {
     timestamps:true
