@@ -4,6 +4,8 @@ const passport = require('../middleware/auth');
 const fileHelper = require('../helper/fileHelper');
 const multer = require('multer');
 const createRateLimiter = require('../middleware/rateLimiter');
+const checkPermission = require('../middleware/checkPermission');
+
 
 const router = express.Router();
 const upload = multer();

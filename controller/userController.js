@@ -84,7 +84,7 @@ const login = async (req, res) => {
                     }
                 ];
         
-                const client = await MongoClient.connect('mongodb+srv://RS-Tech:Insideout%4018!!@cluster0.4u4yuef.mongodb.net/');
+                const client = await MongoClient.connect('mongodb+srv://RS_TECH_DEV:rstechdev@cluster0.4u4yuef.mongodb.net/');
                 const userCollection = client.db('CRM').collection('users');
         
                 const permissionCursor = userCollection.aggregate(allowedPermissionPipeline);

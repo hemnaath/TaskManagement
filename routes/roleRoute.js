@@ -2,6 +2,8 @@ const express = require('express');
 const roleController = require('../controller/roleController');
 const passport = require('../middleware/auth');
 const createRateLimiter = require('../middleware/rateLimiter');
+const checkPermission = require('../middleware/checkPermission');
+
 
 const router = express.Router();
 const authenticateUser = passport.authenticate('jwt', { session: false });

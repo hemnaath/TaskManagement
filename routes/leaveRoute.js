@@ -2,6 +2,8 @@ const express = require('express');
 const leaveController = require('../controller/leaveController');
 const passport = require('../middleware/auth');
 const createRateLimiter = require('../middleware/rateLimiter');
+const checkPermission = require('../middleware/checkPermission');
+
 
 
 const router = express.Router();
