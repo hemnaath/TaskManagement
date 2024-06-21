@@ -12,7 +12,8 @@ const userSchema = new mongoose.Schema({
     filepath:{type:String, default:null},
     casual_leave:{type:Number, default:null},
     sick_leave:{type:Number, default:null},
-    permission:{type:Number, default:null}
+    permission:{type:Number, default:null},
+    isVerified: { type: Boolean, default: false },
 },
 {
     timestamps:true

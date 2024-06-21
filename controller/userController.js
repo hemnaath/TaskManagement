@@ -27,7 +27,7 @@ const register = async (req, res) => {
         const destImagePath = path.join(__dirname, '..', 'uploads/profile_picture', `${firstName}.${lastName}.jpg`)
         const defaultImgName = await addDefaultImage(firstName, lastName, srcImagePath, destImagePath);
         const username = firstName + '.' + lastName;
-        const newUser = await User.create({ firstName, lastName, username:username, password: encryptedPassword, email, role: 'admin', filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}` });
+        const newUser = await User.create({ firstName, lastName, username:username, password: encryptedPassword, email, role: 'admin', filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`,isVerified: false  });
         const token = generateToken({ username, email });
         const verificationUrl = process.env.VERIFICATION + token;
         emailHelper.verificationEmail(email, verificationUrl, username);
