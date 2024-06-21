@@ -28,7 +28,7 @@ const register = async (req, res) => {
         const destImagePath = path.join(__dirname, '..', 'uploads/profile_picture', `${firstName}.${lastName}.jpg`)
         const defaultImgName = await addDefaultImage(firstName, lastName, srcImagePath, destImagePath);
         const username = firstName + '.' + lastName;
-        const newUser = await User.create({ firstName, lastName, username:username, password: encryptedPassword, email, role: 'admin', filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`,is_Verified: false  });
+        const newUser = await User.create({ firstName, lastName, username:username, password: encryptedPassword, email, role: 'admin', filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`,is_verified: false  });
         const token = generateToken({ username, email });
         const verificationUrl = process.env.VERIFICATION + token;
         emailHelper.verificationEmail(email, verificationUrl, username);
@@ -248,27 +248,19 @@ const logout = async (req, res) => {
 }
 const verifyEmail = async (req, res) => {
     const { token } = req.query;
-    console.log(`Received token: ${token}`);
     if (!token) {
         return res.status(400).json({ error: 'Token is missing' });
     }
     try {
         const decoded = jwt.verify(token, process.env.SECRET_KEY);
         const email = decoded.email;
-
-        console.log(`Decoded payload: ${JSON.stringify(decoded)}`);
-        const userdata = await User.findOne(email);
-        if (!userdata) {
+        const userData = await User.findOne(email);
+        if (!userData)
             return res.status(400).json({ error: 'Invalid token or user not found' });
-        }
-
-        if (userdata.isVerified) {
+        if (userData.isVerified)
             return res.status(400).json({ error: 'User is already verified' });
-        }
-
-        userdata.isVerified = true;
-        await userdata.save();
-
+        userData.is_verified = true;
+        await userData.save();
         return res.status(200).json({ message: 'Email successfully verified' });
     } catch (error) {
         console.error(error);
