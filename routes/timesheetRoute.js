@@ -22,5 +22,7 @@ const checkPermissionsMiddleware = (requiredPermission) => async (req, res, next
 
 router.get('/my-timesheet-data', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('my_timesheet_data'), timesheetController.myTimesheetData);
 router.get('/team-timesheet-data', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('team_timesheet_data'), timesheetController.teamTimesheetData);
+router.get('/get-team-members', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), timesheetController.getTeamMembers);
+router.get('/get-weekly-report/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), timesheetController.getWeeklyReport);
 
 module.exports = router;

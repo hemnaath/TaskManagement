@@ -91,7 +91,7 @@ const login = async (req, res) => {
                 const result = await permissionCursor.toArray();
         
                 await client.close();
-
+                await exists.updateOne({$set:{is_loggedIn:true}});
                 return res.status(200).json({ token, username: exists.username, isOrgId: orgFlag, isVerificationRequired: verifyFlag, allowedPermissions:result });
             }
         }
@@ -238,6 +238,7 @@ const logout = async (req, res) => {
                 const currentTime = new Date().toLocaleTimeString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata' });
                 await exists.updateOne({$set:{out_time:currentTime}});
             }
+            await User.updateOne({_id:req.user.id},{is_loggedIn:false});
             res.status(200).json({message:'User LoggedOut'});
         }
         await tsWorkedHrs(req.user.id);
@@ -246,6 +247,7 @@ const logout = async (req, res) => {
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
+
 const verifyEmail = async (req, res) => {
     const { token } = req.query;
     if (!token) {
@@ -267,6 +269,7 @@ const verifyEmail = async (req, res) => {
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 }
+
 async function tsWorkedHrs(id) {
     const exists = await Timesheet.findOne({ user_id: id, date: new Date().toISOString().split('T')[0] });
     if (exists) {

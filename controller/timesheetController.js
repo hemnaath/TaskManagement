@@ -1,4 +1,5 @@
 const Timesheet = require('../model/timesheetModel');
+const User = require('../model/userModel');
 const {MongoClient, ObjectId} = require('mongodb');
 
 const myTimesheetData = async(req, res)=>{
@@ -99,11 +100,38 @@ const teamTimesheetData = async (req, res) => {
     }
 }
 
+const getTeamMembers = async(req, res)=>{
+	try{
+		const teamMembers = await User.find({reporting_person:req.user.id});
+		if(teamMembers.length > 0)
+			return res.status(200).json(teamMembers);
+		else
+			return res.status(404).json({message:'No team members found'});
+	}catch(error){
+		console.error(error);
+		return res.status(500).json({error:'Internal server error'});
+	}
+}
 
+const getWeeklyReport = async(req, res)=>{
+	const userId = req.params.id;
+	try{
+		const userData = await Timesheet.find({user_id:userId}).sort({date:-1}).limit(7);
+		if(userData.length > 0)
+			return res.status(200).json(userData);
+		else
+			return res.status(404).json({message:'No data found'});
+	}catch(error){
+		console.error(error);
+		return res.status(500).json({error:'Internal server error'});
+	}
+}
 
 
 
 module.exports={
     myTimesheetData,
-    teamTimesheetData
+    teamTimesheetData,
+	getTeamMembers,
+	getWeeklyReport
 }

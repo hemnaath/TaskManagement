@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema({
     sick_leave:{type:Number, default:null},
     permission:{type:Number, default:null},
     is_verified: { type: Boolean, default: false },
+    is_loggedIn :{type:Boolean, default:false}
 },
 {
     timestamps:true
