@@ -38,6 +38,7 @@ const register = async (req, res) => {
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 const resendVerificationEmail = async (req, res) => {
     const { email } = req.body;
     try {
@@ -57,10 +58,11 @@ const resendVerificationEmail = async (req, res) => {
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 }
+
 const login = async (req, res) => {
     const { email, password } = req.body;
     try {
-        let token, timesheetExists = null;
+        let timesheetExists = null;
         let orgFlag = false;
         let verifyFlag = false;
         const exists = await User.findOne({email});
@@ -216,7 +218,7 @@ const inviteUser = async(req, res)=>{
         const destImagePath = path.join(__dirname, '..', 'uploads/profile_picture', `${firstName}.${lastName}.jpg`)
         const defaultImgName = await addDefaultImage(firstName, lastName, srcImagePath, destImagePath);
         const username = firstName + '.' + lastName;
-        const newUser = await User.findOneAndUpdate({email:email},{$set:{ username:username, password: encryptedPassword, org_id:orgId, filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`} });
+        const newUser = await User.findOneAndUpdate({email:email},{$set:{ username:username, password: encryptedPassword, org_id:orgId, filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`, is_verified:true} });
         return res.status(201).json({ message: 'User Created'});
     }catch(error){
         console.log(error);
@@ -304,7 +306,7 @@ const verifyEmail = async (req, res) => {
         const userData = await User.findOne(email);
         if (!userData)
             return res.status(400).json({ error: 'Invalid token or user not found' });
-        if (userData.isVerified)
+        if (userData.is_verified)
             return res.status(400).json({ error: 'User is already verified' });
         userData.is_verified = true;
         await userData.save();
