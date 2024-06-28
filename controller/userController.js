@@ -63,8 +63,7 @@ const login = async (req, res) => {
     const { email, password } = req.body;
     try {
         let timesheetExists = null;
-        let orgFlag = false;
-        let verifyFlag = false;
+        let orgFlag = true;
         const exists = await User.findOne({email});
         if (exists) {
             if (!exists.is_verified) {
@@ -77,7 +76,7 @@ const login = async (req, res) => {
                 req.session.accessToken = accessToken;
                 req.session.refreshToken = refreshToken;
                 if (exists.org_id) {
-                    orgFlag = true;
+                    orgFlag = false;
                 }
                 const timezone = { hour12: false, timeZone: 'Asia/Kolkata' };
                 const currentDate = new Date().toISOString().split('T')[0];
@@ -118,7 +117,7 @@ const login = async (req, res) => {
         
                 await client.close();
                 await exists.updateOne({$set:{is_loggedIn:true}});
-                return res.status(200).json({ accessToken,refreshToken, username: exists.username, isOrgId: orgFlag, isVerificationRequired: verifyFlag, allowedPermissions:result });
+                return res.status(200).json({ accessToken,refreshToken, username: exists.username, isOrgIdRequired: orgFlag, allowedPermissions:result });
             }
         }
         return res.status(404).json({message:'User Not Found'});
@@ -193,7 +192,7 @@ const sendInvite = async(req, res)=>{
             const token = generateToken(req.user.org_id);
             const url = process.env.SEND_INVITE+token;
             await emailHelper.inviteMail(to, url);
-            await User.create({email:to, role:'viewer'});
+            await User.create({email:to, role:'viewer', is_verified:true});
             return res.status(200).json({message:'Invite sent'});
         }
     }catch(error){
@@ -207,6 +206,7 @@ const inviteUser = async(req, res)=>{
     const tokens = req.query.token;
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     try{
+        const exists = await User.findOne({email});
         if (!passwordRegex.test(password))
             return res.status(400).json({message:'Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.'});
         const decodedToken = jwtDecode(tokens);
@@ -218,8 +218,11 @@ const inviteUser = async(req, res)=>{
         const destImagePath = path.join(__dirname, '..', 'uploads/profile_picture', `${firstName}.${lastName}.jpg`)
         const defaultImgName = await addDefaultImage(firstName, lastName, srcImagePath, destImagePath);
         const username = firstName + '.' + lastName;
-        const newUser = await User.findOneAndUpdate({email:email},{$set:{ username:username, password: encryptedPassword, org_id:orgId, filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`, is_verified:true} });
-        return res.status(201).json({ message: 'User Created'});
+        if(exists){
+            await User.findOneAndUpdate({email:email},{$set:{ username:username, password: encryptedPassword, org_id:orgId, filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`} });
+            return res.status(201).json({ message: 'User Created'});
+        }else
+            return res.status(404).json({message:'No user found invited'});
     }catch(error){
         console.log(error);
         return res.status(500).json({error:'Internal Server Error'});
