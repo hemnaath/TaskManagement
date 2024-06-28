@@ -1,5 +1,5 @@
 const {passcrypt, compass} = require('../helper/passwordHelper');
-const {generateToken} = require('../helper/tokenHelper');
+const {generateToken,generateRefreshToken} = require('../helper/tokenHelper');
 const emailHelper = require('../helper/emailHelper');
 const fs = require('fs').promises;
 const User = require('../model/userModel');
@@ -47,9 +47,15 @@ const login = async (req, res) => {
         let verifyFlag = false;
         const exists = await User.findOne({email});
         if (exists) {
+            if (!exists.isVerified) {
+                return res.status(403).json({ message: 'Please verify your email before logging in.' });
+            }
             const comparePassword = await compass(password, exists.password);
             if (comparePassword) {
-                token = generateToken({ role: exists.role, id: exists.id, org: exists.org_id });
+                const accessToken = generateToken({ role: exists.role, id: exists.id, org: exists.org_id });
+                const refreshToken = generateRefreshToken({ role: exists.role, id: exists.id, org: exists.org_id });
+                req.session.accessToken = accessToken;
+                req.session.refreshToken = refreshToken;
                 if (exists.org_id) {
                     orgFlag = true;
                 }
@@ -92,7 +98,7 @@ const login = async (req, res) => {
         
                 await client.close();
                 await exists.updateOne({$set:{is_loggedIn:true}});
-                return res.status(200).json({ token, username: exists.username, isOrgId: orgFlag, isVerificationRequired: verifyFlag, allowedPermissions:result });
+                return res.status(200).json({ accessToken,refreshToken, username: exists.username, isOrgId: orgFlag, isVerificationRequired: verifyFlag, allowedPermissions:result });
             }
         }
         return res.status(404).json({message:'User Not Found'});
@@ -101,7 +107,25 @@ const login = async (req, res) => {
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
-
+const refreshToken = async (req, res) => {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+        return res.status(400).json({ error: 'Refresh token is required' });
+    }
+    try {
+        const userId = req.user.id; // Extract the user ID from the authenticated request
+        const user = await User.findById(userId)
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const newAccessToken = generateToken({ id: user._id, username: user.username });
+        const newRefreshToken = generateRefreshToken({ id: user._id });
+        return res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken ,user:user});
+    } catch (error) {
+        console.error('Error refreshing token:', error);
+        return res.status(401).json({ error: 'Invalid or expired refresh token' });
+    }
+}
 const forgetPassword = async(req, res)=>{
     const {email} = req.body;
     try{
@@ -139,7 +163,7 @@ const resetPassword = async(req, res)=>{
 
 const sendInvite = async(req, res)=>{
     const {to} = req.body;
-    const token = generateToken(req.user.org_id);
+    const token = generateToken(req.user.org_id, to);
     const url = process.env.SEND_INVITE+token;
     await emailHelper.inviteMail(to, url);
     return res.status(200).json({message:'Invite sent'});
@@ -313,6 +337,7 @@ async function addDefaultImage(firstName, lastName, srcImagePath, destImagePath)
 module.exports={
     register,
     login,
+    refreshToken,
     forgetPassword,
     resetPassword,
     sendInvite,

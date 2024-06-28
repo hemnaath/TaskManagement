@@ -34,8 +34,9 @@ const checkSession = async(req, res, next) =>{
 }
 
 router.post('/register', createRateLimiter(10 * 60 * 1000, 50), userController.register);
-router.get('/verify-email', userController.verifyEmail);
+router.get('/verify-email', createRateLimiter(10 * 60 * 1000, 100),userController.verifyEmail);
 router.post('/login', createRateLimiter(10 * 60 * 1000, 100), userController.login);
+router.post('/refreshToken',authenticateUser,createRateLimiter(10 * 60 * 1000, 100),userController.refreshToken);
 router.patch('/dp-upload', authenticateUser, upload.single('File'), createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('upload_dp'), userController.uploadDp);
 router.patch('/reset-password', createRateLimiter(10 * 60 * 1000, 50), userController.resetPassword);
 router.post('/forget-password', createRateLimiter(10 * 60 * 1000, 50), userController.forgetPassword);
