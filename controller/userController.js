@@ -38,7 +38,25 @@ const register = async (req, res) => {
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-
+const resendVerificationEmail = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        if (user.is_verified) {
+            return res.status(400).json({ error: 'User is already verified' });
+        }
+        const token = jwt.sign({ username: user.username, email: user.email }, process.env.SECRET_KEY, { expiresIn: '1h' });
+        const verificationUrl = `${process.env.VERIFICATION_URL}?token=${token}`;
+        emailHelper.verificationEmail(email, verificationUrl, user.username);
+        return res.status(200).json({ message: 'Verification email sent' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+}
 const login = async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -47,7 +65,7 @@ const login = async (req, res) => {
         let verifyFlag = false;
         const exists = await User.findOne({email});
         if (exists) {
-            if (!exists.isVerified) {
+            if (!exists.is_verified) {
                 return res.status(403).json({ message: 'Please verify your email before logging in.' });
             }
             const comparePassword = await compass(password, exists.password);
@@ -349,5 +367,6 @@ module.exports={
     getDp,
     assignReportingPerson,
     logout,
-    verifyEmail
+    verifyEmail,
+    resendVerificationEmail
 }
