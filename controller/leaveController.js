@@ -7,7 +7,7 @@ const resetLeave = async(req, res)=>{
         await User.updateMany({}, {$set:{casual_leave:casualLeave, sick_leave:sickLeave, permission:permission}});
         return res.status(200).json({message:'Leave updated'});
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -34,7 +34,7 @@ const applyLeave = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -72,7 +72,7 @@ const approveLeave = async(req, res)=>{
         }
         return res.status(404).json({messsage:'User not Found'});
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }

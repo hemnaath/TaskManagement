@@ -16,7 +16,7 @@ const createOrg = async(req, res)=>{
             res.status(200).json({message:'Org Created', creator});
         }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -31,7 +31,7 @@ const getOrg = async (req, res)=>{
             return res.status(400).json({message:'Org not Found'});
         }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -46,7 +46,7 @@ const updateOrg = async(req, res)=>{
             return res.status(204).json({message:'Org updated'});
         }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal server error'});
     }
 }
@@ -70,7 +70,7 @@ const deleteOrg = async(req, res)=>{
             return res.status(200).json({message:'Org deleted'});
         }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal server error'});
     }
 }

@@ -15,7 +15,7 @@ const createTask = async (req, res) => {
                 return res.status(201).json({message:'Task Created', newTask});
             }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -42,7 +42,7 @@ const updateTask = async(req, res) =>{
             return res.status(400).json({ message: 'No task exists' });
         }
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 }
@@ -60,7 +60,7 @@ const deleteTask = async(req, res)=>{
             return res.status(404).json({message:'No Tasks Found'});
         }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -78,7 +78,7 @@ const taskPagination = async (req, res)=>{
         const displayData = [{'startIndex':startIndex, 'endIndex':endIndex}];
         return res.status(200).json({pagination, totalPages, limit, page, totalData, displayData});
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }

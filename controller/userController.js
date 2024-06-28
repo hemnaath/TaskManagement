@@ -156,7 +156,7 @@ const forgetPassword = async(req, res)=>{
         await emailHelper.passwordReset(email, url, exists.username);
         return res.status(200).json({message:'Password reset link sent'});
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -177,7 +177,7 @@ const resetPassword = async(req, res)=>{
         await User.updateOne({email:emailId},{$set:{password:encryptedPassword}});
         return res.status(200).json({message:'Password updated'});
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -224,7 +224,7 @@ const inviteUser = async(req, res)=>{
         }else
             return res.status(404).json({message:'No user found invited'});
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -245,7 +245,7 @@ const uploadDp = async(req, res)=>{
         }
         return res.status(404).json({message:'User not Found'});
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -260,7 +260,7 @@ const getDp = async(req, res)=>{
         }
         return res.status(404).json({message:'User not Found'});
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -274,7 +274,7 @@ const assignReportingPerson = async(req, res)=>{
             return res.status(301).json({message:'Reporting Persons assigned'});
         }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -293,7 +293,7 @@ const logout = async (req, res) => {
         }
         await tsWorkedHrs(req.user.id);
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }

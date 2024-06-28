@@ -15,7 +15,7 @@ const createProject = async(req, res)=>{
             return res.status(200).json({message:'Project Created', newProject});
         }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -29,7 +29,7 @@ const getAllProjects = async(req, res) => {
             return res.status(404).json({message:'No projects found'});
         }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     } 
 }
@@ -46,7 +46,7 @@ const updateProject = async (req, res)=>{
             return res.status(404).json({message:'No Projects Found'});
         }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -64,7 +64,7 @@ const deleteProject = async (req, res)=>{
             return res.status(404).json({message:'No Project Found'});
         }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -79,7 +79,7 @@ const getProjectById = async (req, res)=>{
             return res.status(404).json({message:'No Projects Found'});
         }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     } 
 }

@@ -10,7 +10,7 @@ const createComment = async(req, res)=>{
         const newComment = await Comment.create({comment, user_id:req.user.id, task_id:taskId, project_id:tasks.project_id});
         return res.status(200).json({message:'commented', newComment});
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -27,7 +27,7 @@ const updateComment = async (req, res)=>{
             return res.status(404).json({message:'No Comments Found'});
         }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -43,7 +43,7 @@ const deleteComment = async (req, res)=>{
             return res.status(404).json({message:'No Comments Found'});
         }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
@@ -67,7 +67,7 @@ const getComment = async (req, res) => {
             return res.status(404).json({message:'No comments found'});
         }
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.status(500).json({error:'Internal server error'});
     }
 }
