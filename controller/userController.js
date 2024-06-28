@@ -107,6 +107,7 @@ const login = async (req, res) => {
         return res.status(500).json({error:'Internal Server Error'});
     }
 }
+
 const refreshToken = async (req, res) => {
     const { refreshToken } = req.body;
     if (!refreshToken) {
@@ -126,6 +127,7 @@ const refreshToken = async (req, res) => {
         return res.status(401).json({ error: 'Invalid or expired refresh token' });
     }
 }
+
 const forgetPassword = async(req, res)=>{
     const {email} = req.body;
     try{
@@ -163,40 +165,41 @@ const resetPassword = async(req, res)=>{
 
 const sendInvite = async(req, res)=>{
     const {to} = req.body;
-    const token = generateToken(req.user.org_id, to);
-    const url = process.env.SEND_INVITE+token;
-    await emailHelper.inviteMail(to, url);
-    return res.status(200).json({message:'Invite sent'});
+    try{
+        const userExists = await User.findOne({email:to});
+        if(userExists)
+            return res.status(403).json({message:'User already exists'});
+        else{
+            const token = generateToken(req.user.org_id);
+            const url = process.env.SEND_INVITE+token;
+            await emailHelper.inviteMail(to, url);
+            await User.create({email:to, role:'viewer'});
+            return res.status(200).json({message:'Invite sent'});
+        }
+    }catch(error){
+        console.error(error);
+        return res.status(500).json({error:'Internal server error'});
+    }
 }
 
 const inviteUser = async(req, res)=>{
-    const {firstName, lastName, password, email} = req.body;
+    const {firstName, lastName, email, password} = req.body;
     const tokens = req.query.token;
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     try{
-        if (!passwordRegex.test(password)) {
+        if (!passwordRegex.test(password))
             return res.status(400).json({message:'Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.'});
-        }
-        const exists = await User.findOne({email});
-        if (exists){
-            return res.status(409).json({message:'User Exists'});
-        }else {
-            decodedToken = jwtDecode(tokens);
-            if (!decodedToken) {
-                return res.status(400).json({message:'Invalid token'});
-            }
-            const orgId = decodedToken.payload;
-            const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
-            const srcImagePath = path.join(__dirname, '..', 'uploads/profile_picture', 'avatar.png');
-            const destImagePath = path.join(__dirname, '..', 'uploads/profile_picture', `${firstName}.${lastName}.jpg`)
-            const defaultImgName = await addDefaultImage(firstName, lastName, srcImagePath, destImagePath);
-            const username = firstName + '.' + lastName;
-            const newUser = await User.create({ username:username, password: encryptedPassword, org_id:orgId, email, role: 'editor', filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}` });
-            const token = generateToken({ username, email });
-            const verificationUrl = process.env.VERIFICATION + token;
-            emailHelper.verificationEmail(email, verificationUrl, username);
-            return res.status(201).json({ message: 'User Created', user: newUser });
-        }
+        const decodedToken = jwtDecode(tokens);
+        if (!decodedToken)
+            return res.status(400).json({message:'Invalid token'});
+        const orgId = decodedToken.payload;
+        const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
+        const srcImagePath = path.join(__dirname, '..', 'uploads/profile_picture', 'avatar.png');
+        const destImagePath = path.join(__dirname, '..', 'uploads/profile_picture', `${firstName}.${lastName}.jpg`)
+        const defaultImgName = await addDefaultImage(firstName, lastName, srcImagePath, destImagePath);
+        const username = firstName + '.' + lastName;
+        const newUser = await User.findOneAndUpdate({email:email},{$set:{ username:username, password: encryptedPassword, org_id:orgId, filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`} });
+        return res.status(201).json({ message: 'User Created'});
     }catch(error){
         console.log(error);
         return res.status(500).json({error:'Internal Server Error'});
