@@ -109,7 +109,7 @@ const login = async (req, res) => {
                     }
                 ];
         
-                const client = await MongoClient.connect('mongodb+srv://RS_TECH_DEV:rstechdev@cluster0.4u4yuef.mongodb.net/');
+                const client = await MongoClient.connect(process.env.DB_CONNECT);
                 const userCollection = client.db('CRM').collection('users');
         
                 const permissionCursor = userCollection.aggregate(allowedPermissionPipeline);
@@ -133,7 +133,7 @@ const refreshToken = async (req, res) => {
         return res.status(400).json({ error: 'Refresh token is required' });
     }
     try {
-        const userId = req.user.id; // Extract the user ID from the authenticated request
+        const userId = req.user.id;
         const user = await User.findById(userId)
         if (!user) {
             return res.status(404).json({ error: 'User not found' });

@@ -78,7 +78,7 @@ const teamTimesheetData = async (req, res) => {
 			  ]
 			}
 		  ]
-        const client = await MongoClient.connect('mongodb+srv://RS_TECH_DEV:rstechdev@cluster0.4u4yuef.mongodb.net/');
+        const client = await MongoClient.connect(process.env.DB_CONNECT);
 
         const userCollection = client.db('CRM').collection('users');
 
