@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
     username:{type: String, default:null},
     password:{type:String, default:null},
-    email:{type:String, require:true, unique:true},
-    role:{type:String, require:true},
+    email:{type:String, required:true, unique:true},
+    role:{type:String, required:true},
     org_id:{type:mongoose.Schema.Types.ObjectId, default:null},
     reporting_person:{type:mongoose.Schema.Types.ObjectId, default:null},
     filename:{type:String, default:null},

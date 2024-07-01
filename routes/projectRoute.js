@@ -25,6 +25,6 @@ router.post('/create-project', authenticateUser, createRateLimiter(10 * 60 * 100
 router.get('/get-all-project', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('get_all_project'), projectController.getAllProjects);
 router.patch('/update-project/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('update_project'), projectController.updateProject);
 router.delete('/delete-project/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('delete_project'), projectController.deleteProject);
-router.get('/get-project/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('get_project'), projectController.getProjectById);
+router.get('/get-project-data/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('get_project'), projectController.getProjectById);
 
 module.exports = router;
