@@ -13,6 +13,6 @@ router.post('/create-project', authenticateUser, createRateLimiter(10 * 60 * 100
 router.get('/get-all-project', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), projectController.getAllProjects);
 router.patch('/update-project/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), projectController.updateProject);
 router.delete('/delete-project/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), projectController.deleteProject);
-router.get('/get-project-data/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), projectController.getProjectById);
+router.get('/get-project-data/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), projectController.getProjectDataById);
 
 module.exports = router;
