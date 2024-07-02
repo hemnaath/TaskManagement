@@ -3,6 +3,8 @@ const taskController = require('../controller/taskController');
 const passport = require('../middleware/auth');
 const fileHelper = require('../helper/fileHelper');
 const createRateLimiter = require('../middleware/rateLimiter');
+const sessionStatus = require('../middleware/session');
+
 
 
 const checkSession = async(req, res, next) =>{

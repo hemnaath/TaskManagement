@@ -1,5 +1,6 @@
 const Task = require('../model/taskModel');
 const Comment = require('../model/commentModel');
+const fileHelper = require('../helper/fileHelper');
 
 const createTask = async (req, res) => {
     const projectId = req.params.id;
@@ -49,6 +50,7 @@ const deleteTask = async(req, res)=>{
             await Comment.deleteMany({task_id:taskId});
             await Task.deleteMany({parent_task:taskId});
             await exists.deleteOne();
+            fileHelper.deleteDirectory(process.env.EXISTING_IMAGE_PATH + 'uploads/task/' + exists.task_type + '-' + exists.task_number);
             return res.status(200).json({message:'Task Deleted'});
         }else{
             return res.status(404).json({message:'No Tasks Found'});

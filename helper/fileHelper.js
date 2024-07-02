@@ -9,6 +9,12 @@ const createDirectory = (dirPath) => {
     }
 };
 
+const deleteDirectory = (dirPath) =>{
+    if(fs.existsSync(dirPath)){
+        fs.rmdirSync(dirPath, {recursive: true});
+    }
+}
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'uploads/profile_picture');
@@ -28,7 +34,7 @@ const taskStorage = multer.diskStorage({
         createDirectory(uploadPath);
         const attachment = {
             filename: Date.now() + '_' + file.originalname,
-            filepath: path.join(uploadPath, Date.now() + '_' + file.originalname)
+            filepath: path.join(uploadPath, '/')
         };
         taskData.attachments.push(attachment);
         await taskData.save();
@@ -57,4 +63,4 @@ const taskUpload = multer({
     fileFilter: fileFilter
 });
 
-module.exports = { upload, taskUpload };
+module.exports = { upload, taskUpload, deleteDirectory };
