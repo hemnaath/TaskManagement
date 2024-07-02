@@ -2,28 +2,29 @@ const express = require('express');
 const orgController = require('../controller/orgController');
 const passport = require('../middleware/auth');
 const createRateLimiter = require('../middleware/rateLimiter');
-const checkPermission = require('../middleware/checkPermission');
 
+
+const checkSession = async(req, res, next) =>{
+    try{
+        const sessionFlag = await sessionStatus(req, res);
+        if(sessionFlag)
+            next();
+        else
+            return res.status(401).json({error:'Unauthorized'});
+    }catch(error){
+        console.error(error);
+        return res.status(500).json({error:'Internal server error'});
+    }
+}
 
 
 const router = express.Router();
 const authenticateUser = passport.authenticate('jwt', { session: false });
 
-const checkPermissionsMiddleware = (requiredPermission) => async (req, res, next) => {
-    try {
-        const permissionGranted = await checkPermission(req, res, requiredPermission);
-        if (permissionGranted) {
-            next();
-        }
-    } catch (error) {
-        console.error('Permission check error:', error);
-        return res.status(500).json({ error: 'Internal server error' });
-    }
-};
 
-router.post('/create-org', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('create_org'), orgController.createOrg);
-router.get('/get-org', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('get_org'), orgController.getOrg);
-router.patch('/update-org/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('update_org'), orgController.updateOrg);
-router.delete('/delete-org/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('delete_org'), orgController.deleteOrg);
+router.post('/create-org', authenticateUser, checkSession, createRateLimiter(10 * 60 * 1000, 50), orgController.createOrg);
+router.get('/get-org', authenticateUser, checkSession, createRateLimiter(10 * 60 * 1000, 50), orgController.getOrg);
+router.patch('/update-org/:id', authenticateUser, checkSession, createRateLimiter(10 * 60 * 1000, 50), orgController.updateOrg);
+router.delete('/delete-org/:id', authenticateUser, checkSession, createRateLimiter(10 * 60 * 1000, 50), orgController.deleteOrg);
 
 module.exports = router;

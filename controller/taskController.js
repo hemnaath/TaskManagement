@@ -18,26 +18,30 @@ const createTask = async (req, res) => {
     }
 }
 
-const updateTask = async(req, res) =>{
+const updateTask = async (req, res) => {
     const taskId = req.params.id;
-    const { taskTitle, description, notes, filename, filepath, createdBy, assignedTo, priority, effortEstimation, status, releaseVersion, parentTask} = req.body;
+    const { taskTitle, description, notes, assignedTo, priority, effortEstimation, status, releaseVersion, parentTask } = req.body;
     try {
-        const exists = await Task.findById(taskId);
-        if (exists) {
-            if(status === 'accepted'){
-                const startDate = new Date().toISOString().split('T')[0];
-                await exists.updateOne({start_date:startDate});
-            }
-            const taskUpdates = await exists.updateOne({task_title:taskTitle, description:description, notes:notes, filename:req.file.originalname, filepath:req.file.path, created_by:req.user.id, assigned_to:assignedTo, priority:priority, effort_estimastion:effortEstimation, status:status, release_version:releaseVersion, parent_task:parentTask});
-            return res.status(301).json({message:'Task updated', taskUpdates});
-        } else {
+        const task = await Task.findById(taskId);
+        if (!task)
             return res.status(400).json({ message: 'No task exists' });
+        const updates = {task_title:taskTitle, description:description, notes:notes, assigned_to:assignedTo, priority:priority, effort_estimation:effortEstimation, status:status, release_version:releaseVersion, parent_task:parentTask};
+        if (status === 'accepted' && !task.start_date)
+            updates.start_date = new Date().toISOString().split('T')[0];
+        if (req.file) {
+            updates.filename = req.file.originalname;
+            updates.filepath = req.file.path;
         }
+        const taskUpdates = await Task.findByIdAndUpdate(taskId, updates, { new: true });
+        return res.status(200).json({ message: 'Task updated', taskUpdates });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 }
+
+module.exports = updateTask;
+
 
 const deleteTask = async(req, res)=>{
     const taskId = req.params.id;

@@ -7,15 +7,17 @@ const taskSchema = new mongoose.Schema({
     project_id: { type: mongoose.Schema.Types.ObjectId, required: true },
     description: { type: String, default:null },
     notes: { type: String, default:null },
-    filename: { type: String, default:null },
-    filepath: { type: String, default:null },
+    attachments: [{ 
+        filename:{type: String, default:null},
+        filepath:{type:String, default:null}
+    }],
     created_by: { type: mongoose.Schema.Types.ObjectId, required: true },
     assigned_to: { type: mongoose.Schema.Types.ObjectId, default:null },
     priority: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default:null},
-    effort_estimation: { type: Number, default:null },
+    effort_estimation: { type: String, default:null },
     status: { type: String, enum: ['completed', 'on_hold', 'accepted', 'unassigned'], default:null},
     release_version: { type: String, default:null },
-    start_date: { type: Date, default:null },
+    start_date: { type: String, default:null },
     parent_task:{type:mongoose.Schema.Types.ObjectId, default:null},
 }, {
     timestamps: true

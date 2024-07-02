@@ -12,8 +12,6 @@ const taskRouting = require('./routes/taskRoute');
 const commentRouting = require('./routes/commentRoute');
 const leaveRouting = require('./routes/leaveRoute');
 const timesheetRouting = require('./routes/timesheetRoute');
-const roleRouting = require('./routes/roleRoute');
-const permissionRouting = require('./routes/permissionRoute');
 
 const app = express();
 
@@ -47,9 +45,6 @@ app.use('/api', taskRouting);
 app.use('/api', commentRouting);
 app.use('/api', leaveRouting);
 app.use('/api', timesheetRouting);
-app.use('/api', roleRouting);
-app.use('/api', permissionRouting);
-
 
 
 

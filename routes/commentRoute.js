@@ -2,28 +2,29 @@ const commentController = require('../controller/commentController');
 const express = require('express');
 const passport = require('../middleware/auth');
 const createRateLimiter = require('../middleware/rateLimiter');
-const checkPermission = require('../middleware/checkPermission');
 
+
+const checkSession = async(req, res, next) =>{
+    try{
+        const sessionFlag = await sessionStatus(req, res);
+        if(sessionFlag)
+            next();
+        else
+            return res.status(401).json({error:'Unauthorized'});
+    }catch(error){
+        console.error(error);
+        return res.status(500).json({error:'Internal server error'});
+    }
+}
 
 
 const router = express.Router();
 const authenticateUser = passport.authenticate('jwt', { session: false });
 
-const checkPermissionsMiddleware = (requiredPermission) => async (req, res, next) => {
-    try {
-        const permissionGranted = await checkPermission(req, res, requiredPermission);
-        if (permissionGranted) {
-            next();
-        }
-    } catch (error) {
-        console.error('Permission check error:', error);
-        return res.status(500).json({ error: 'Internal server error' });
-    }
-};
 
-router.post('/create-comment/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('create_comment'), commentController.createComment);
-router.patch('/update-comment/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('update_comment'), commentController.updateComment);
-router.delete('/delete-comment/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('delete_comment'), commentController.deleteComment);
-router.get('/get-comment/:id', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), checkPermissionsMiddleware('get_comment'), commentController.getComment);
+router.post('/create-comment/:id', authenticateUser, checkSession, createRateLimiter(10 * 60 * 1000, 50), commentController.createComment);
+router.patch('/update-comment/:id', authenticateUser, checkSession, createRateLimiter(10 * 60 * 1000, 50), commentController.updateComment);
+router.delete('/delete-comment/:id', authenticateUser, checkSession, createRateLimiter(10 * 60 * 1000, 50), commentController.deleteComment);
+router.get('/get-comment/:id', authenticateUser, checkSession, createRateLimiter(10 * 60 * 1000, 50), commentController.getComment);
 
 module.exports = router;
