@@ -9,8 +9,8 @@ const taskSchema = new mongoose.Schema({
     notes: { type: String, default:null },
     attachments: [{ 
         filename:{type: String, default:null},
-        filepath:{type:String, default:null}
     }],
+    filepath:{type:String, default:null},
     created_by: { type: mongoose.Schema.Types.ObjectId, required: true },
     assigned_to: { type: mongoose.Schema.Types.ObjectId, default:null },
     priority: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default:null},

@@ -34,7 +34,6 @@ const taskStorage = multer.diskStorage({
         createDirectory(uploadPath);
         const attachment = {
             filename: Date.now() + '_' + file.originalname,
-            filepath: path.join(uploadPath, '/')
         };
         taskData.attachments.push(attachment);
         await taskData.save();
