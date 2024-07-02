@@ -2,6 +2,7 @@ const express = require('express');
 const orgController = require('../controller/orgController');
 const passport = require('../middleware/auth');
 const createRateLimiter = require('../middleware/rateLimiter');
+const sessionStatus = require('../middleware/session');
 
 
 const checkSession = async(req, res, next) =>{

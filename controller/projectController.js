@@ -73,7 +73,8 @@ const getProjectDataById = async(req, res)=>{
         if(pagination.length > 0){
             const totalData = await Task.countDocuments({project_id:projectId});
             const totalPages = Math.ceil(totalData/limit);
-            const endIndex = (page * limit);
+            let endIndex = (page * limit);
+            (endIndex > totalData) ? endIndex = totalData : endIndex;
             const startIndex = endIndex - ((limit - 10) + 9);
             const displayData = [{'startIndex':startIndex, 'endIndex':endIndex}];
             return res.status(200).json({pagination, totalPages, limit, page, totalData, displayData});
