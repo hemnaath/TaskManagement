@@ -40,8 +40,6 @@ const updateTask = async (req, res) => {
     }
 }
 
-module.exports = updateTask;
-
 
 const deleteTask = async(req, res)=>{
     const taskId = req.params.id;
