@@ -1,8 +1,13 @@
+const mongoose = require('mongoose');
 const {passcrypt, compass} = require('../helper/passwordHelper');
 const {generateToken,generateRefreshToken} = require('../helper/tokenHelper');
 const emailHelper = require('../helper/emailHelper');
 const fs = require('fs').promises;
 const User = require('../model/userModel');
+const Permission= require('../model/permissionModel')
+const Role= require('../model/roleModel')
+const Functionality= require('../model/functionalityModel')
+const Module= require('../model/moduleModel')
 const jwt = require('jsonwebtoken');
 const Timesheet = require('../model/timesheetModel');
 const {jwtDecode} = require('jwt-decode');
@@ -28,7 +33,11 @@ const register = async (req, res) => {
         const destImagePath = path.join(__dirname, '..', 'uploads/profile_picture', `${firstName}.${lastName}.jpg`)
         const defaultImgName = await addDefaultImage(firstName, lastName, srcImagePath, destImagePath);
         const username = firstName + '.' + lastName;
-        const newUser = await User.create({ firstName, lastName, username:username, password: encryptedPassword, email, role: 'admin', filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`,is_verified: false  });
+        const adminRole = await Role.findOne({ name: 'admin' });
+        if (!adminRole) {
+            return res.status(404).json({ error: 'Admin role not found' });
+        }
+        const newUser = await User.create({ firstName, lastName, username:username, password: encryptedPassword, email, role: adminRole._id, filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`,is_verified: false  });
         const token = generateToken({ username, email });
         const verificationUrl = process.env.VERIFICATION + token;
         emailHelper.verificationEmail(email, verificationUrl, username);
@@ -75,6 +84,26 @@ const login = async (req, res) => {
                 const refreshToken = generateRefreshToken({ role: exists.role, id: exists.id, org: exists.org_id });
                 req.session.accessToken = accessToken;
                 req.session.refreshToken = refreshToken;
+                const pipeline = [
+                    {
+                        $match: { role: new mongoose.Types.ObjectId(exists.role) }
+                    },
+                    {
+                        $lookup: {
+                            from: 'modules',
+                            localField: 'permissions.module_id',
+                            foreignField: '_id',
+                            as: 'modules'
+                        }
+                    },
+                ];
+        
+                const permissions = await Permission.aggregate(pipeline);
+        
+                if (!permissions || permissions.length === 0) {
+                    return res.status(404).json({ error: 'Permissions for this role not found' });
+                }
+        
                 if (exists.org_id) {
                     orgFlag = false;
                 }
@@ -85,39 +114,9 @@ const login = async (req, res) => {
                 if(timesheetExists == null || timesheetExists == undefined){
                     await Timesheet.create({ date: currentDate, user_id: exists.id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
                 }
-                const allowedPermissionPipeline = [
-                    {
-                      '$lookup': {
-                        'from': 'permissions', 
-                        'localField': 'role', 
-                        'foreignField': 'role', 
-                        'as': 'result'
-                      }
-                    }, {
-                      '$unwind': {
-                        'path': '$result'
-                      }
-                    }, {
-                      '$match': {
-                        'email': email
-                      }
-                    }, {
-                      '$project': {
-                        '_id': 0, 
-                        'permission': '$result.permission'
-                      }
-                    }
-                ];
-        
-                const client = await MongoClient.connect(process.env.DB_CONNECT);
-                const userCollection = client.db('CRM').collection('users');
-        
-                const permissionCursor = userCollection.aggregate(allowedPermissionPipeline);
-                const result = await permissionCursor.toArray();
-        
-                await client.close();
+                
                 await exists.updateOne({$set:{is_loggedIn:true}});
-                return res.status(200).json({ accessToken,refreshToken, username: exists.username, isOrgIdRequired: orgFlag, allowedPermissions:result });
+                return res.status(200).json({ accessToken,refreshToken, username: exists.username, permissions,isOrgIdRequired: orgFlag});
             }
         }
         return res.status(404).json({message:'User Not Found'});
@@ -182,24 +181,30 @@ const resetPassword = async(req, res)=>{
     }
 }
 
-const sendInvite = async(req, res)=>{
-    const {to} = req.body;
-    try{
-        const userExists = await User.findOne({email:to});
-        if(userExists)
-            return res.status(403).json({message:'User already exists'});
-        else{
-            const token = generateToken(req.user.org_id);
-            const url = process.env.SEND_INVITE+token;
-            await emailHelper.inviteMail(to, url);
-            await User.create({email:to, role:'viewer', is_verified:true});
-            return res.status(200).json({message:'Invite sent'});
+const sendInvite = async (req, res) => {
+    const { to } = req.body;
+    try {
+        const userExists = await User.findOne({ email: to });
+        if (userExists) {
+            return res.status(403).json({ message: 'User already exists' });
         }
-    }catch(error){
+        const viewerRole = await Role.findOne({ name: 'viewer' });
+        if (!viewerRole) {
+            return res.status(404).json({ message: 'Viewer role not found' });
+        }
+        const token = generateToken(req.user.org_id);
+        const url = `${process.env.SEND_INVITE}${token}`;
+        console.log(url)
+        await emailHelper.inviteMail(to, url);
+        await User.create({ email: to, role: viewerRole._id, is_verified: true });
+
+        return res.status(200).json({ message: 'Invite sent' });
+    } catch (error) {
         console.error(error);
-        return res.status(500).json({error:'Internal server error'});
+        return res.status(500).json({ error: 'Internal server error' });
     }
-}
+};
+
 
 const inviteUser = async(req, res)=>{
     const {firstName, lastName, email, password} = req.body;
