@@ -98,9 +98,6 @@ const login = async (req, res) => {
                     }
                 ];
                 const permissions = await Permission.aggregate(pipeline);
-                if (!permissions || permissions.length === 0) {
-                    return res.status(404).json({ error: 'Permissions for this role not found' });
-                }
                 if (exists.org_id) {
                     orgFlag = false;
                 }
