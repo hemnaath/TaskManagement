@@ -6,20 +6,19 @@ const fs = require('fs').promises;
 const User = require('../model/userModel');
 const Permission= require('../model/permissionModel')
 const Role= require('../model/roleModel')
-const Functionality= require('../model/functionalityModel')
-const Module= require('../model/moduleModel')
 const jwt = require('jsonwebtoken');
 const Timesheet = require('../model/timesheetModel');
 const {jwtDecode} = require('jwt-decode');
 const Jimp = require('jimp');
 const path = require('path');
-const {MongoClient} = require('mongodb')
+const { ObjectId } = require('mongodb')
 require('dotenv').config();
 
 
 const register = async (req, res) => {
     const { firstName, lastName, password, email } = req.body;
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    let adminCreator, adminData = null;
     try {
         if (!passwordRegex.test(password)) {
             return res.status(400).json({ error: 'Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.' });
@@ -35,9 +34,10 @@ const register = async (req, res) => {
         const username = firstName + '.' + lastName;
         const adminRole = await Role.findOne({ name: 'admin' });
         if (!adminRole) {
-            return res.status(404).json({ error: 'Admin role not found' });
+            adminCreator = await Role.create({name:'admin'});
         }
-        const newUser = await User.create({ firstName, lastName, username:username, password: encryptedPassword, email, role: adminRole._id, filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`,is_verified: false  });
+        (adminCreator === undefined) ? adminData = adminRole.id : adminData = adminCreator.id;
+        const newUser = await User.create({ firstName, lastName, username:username, password: encryptedPassword, email, role: adminData, filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`,is_verified: false  });
         const token = generateToken({ username, email });
         const verificationUrl = process.env.VERIFICATION + token;
         emailHelper.verificationEmail(email, verificationUrl, username);
@@ -46,7 +46,7 @@ const register = async (req, res) => {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
-};
+}
 
 const resendVerificationEmail = async (req, res) => {
     const { email } = req.body;
@@ -86,9 +86,6 @@ const login = async (req, res) => {
                 req.session.refreshToken = refreshToken;
                 const pipeline = [
                     {
-                        $match: { role: new mongoose.Types.ObjectId(exists.role) }
-                    },
-                    {
                         $lookup: {
                             from: 'modules',
                             localField: 'permissions.module_id',
@@ -96,14 +93,14 @@ const login = async (req, res) => {
                             as: 'modules'
                         }
                     },
+                    {
+                        $match: { role: ObjectId.createFromHexString(exists.role) }
+                    }
                 ];
-        
                 const permissions = await Permission.aggregate(pipeline);
-        
                 if (!permissions || permissions.length === 0) {
                     return res.status(404).json({ error: 'Permissions for this role not found' });
                 }
-        
                 if (exists.org_id) {
                     orgFlag = false;
                 }
@@ -114,7 +111,6 @@ const login = async (req, res) => {
                 if(timesheetExists == null || timesheetExists == undefined){
                     await Timesheet.create({ date: currentDate, user_id: exists.id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
                 }
-                
                 await exists.updateOne({$set:{is_loggedIn:true}});
                 return res.status(200).json({ accessToken,refreshToken, username: exists.username, permissions,isOrgIdRequired: orgFlag});
             }
@@ -183,6 +179,7 @@ const resetPassword = async(req, res)=>{
 
 const sendInvite = async (req, res) => {
     const { to } = req.body;
+    let viewerCreator, viewerData = null;
     try {
         const userExists = await User.findOne({ email: to });
         if (userExists) {
@@ -190,21 +187,19 @@ const sendInvite = async (req, res) => {
         }
         const viewerRole = await Role.findOne({ name: 'viewer' });
         if (!viewerRole) {
-            return res.status(404).json({ message: 'Viewer role not found' });
+            viewerCreator = await Role.create({name:'viewer'});
         }
+        (viewerCreator === undefined) ? viewerData = viewerRole.id : viewerData = viewerCreator.id;
         const token = generateToken(req.user.org_id);
         const url = `${process.env.SEND_INVITE}${token}`;
-        console.log(url)
         await emailHelper.inviteMail(to, url);
-        await User.create({ email: to, role: viewerRole._id, is_verified: true });
-
+        await User.create({ email: to, role: viewerData, is_verified: true });
         return res.status(200).json({ message: 'Invite sent' });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal server error' });
     }
-};
-
+}
 
 const inviteUser = async(req, res)=>{
     const {firstName, lastName, email, password} = req.body;
