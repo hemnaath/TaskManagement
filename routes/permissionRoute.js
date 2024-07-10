@@ -1,6 +1,9 @@
 const express = require('express');
-const router = express.Router();
 const permissionController = require('../controller/permissionController');
+
+
+const router = express.Router();
+
 
 router.post('/add-permissions', permissionController.addPermission);
 router.post('/update-permissions',permissionController.updatePermission)

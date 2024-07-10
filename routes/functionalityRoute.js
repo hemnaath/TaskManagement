@@ -1,6 +1,9 @@
 const express = require('express');
-const router = express.Router();
 const functionalityController = require('../controller/functionalityController');
+
+
+const router = express.Router();
+
 
 router.post('/add-functionality', functionalityController.addFunctionality);
 router.delete('/delete-functionality/:id',functionalityController.deleteFunctionality);
