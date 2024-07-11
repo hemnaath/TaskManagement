@@ -25,4 +25,4 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/crm:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/dev_build:latest
