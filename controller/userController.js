@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const {passcrypt, compass} = require('../helper/passwordHelper');
 const {generateToken,generateRefreshToken} = require('../helper/tokenHelper');
 const emailHelper = require('../helper/emailHelper');
