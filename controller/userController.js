@@ -355,7 +355,6 @@ async function addDefaultImage(firstName, lastName, srcImagePath, destImagePath)
 }
 
 
-
 module.exports={
     register,
     login,
