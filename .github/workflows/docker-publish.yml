@@ -5,9 +5,8 @@ on:
     branches:
       - main
   schedule:
-    - cron: '18 11 * * *'
-  workflow_dispatch:
-
+    - cron: '58 12 * * *'
+ 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
