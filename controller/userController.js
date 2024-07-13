@@ -230,7 +230,8 @@ const uploadDp = async(req, res)=>{
     try{
         const exists = await User.findById(userId);
         if(exists){
-            const existingImagePath = process.env.EXISTING_IMAGE_PATH + exists.filepath;
+            (process.env.NODE_ENV === 'local') ? imgagePath = process.cwd() : imgagePath = __dirname;
+            const existingImagePath = imgagePath + '/' + exists.filepath;
             await fs.unlink(existingImagePath);
             await exists.updateOne({$set:{filename: req.file.originalname, filepath: 'uploads/profile_picture/' + `${req.file.originalname}`}});
             if(req.file.size <= 1024 * 1024){
