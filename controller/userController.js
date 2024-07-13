@@ -22,36 +22,30 @@ const register = async (req, res) => {
         if (!passwordRegex.test(password)) {
             return res.status(400).json({ error: 'Invalid Password. It must have at least 8 characters, 1 uppercase letter, 1 special character, and 1 number.' });
         }
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({email});
         if (existingUser) {
             return res.status(409).json({ error: 'User Already Exists' });
         }
         const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
         const srcImagePath = path.join(__dirname, '..', 'uploads/profile_picture', 'avatar.png');
-        const destImagePath = path.join(__dirname, '..', 'uploads/profile_picture', `${firstName}.${lastName}.jpg`);
-        let defaultImgName;
-        try {
-            defaultImgName = await addDefaultImage(firstName, lastName, srcImagePath, destImagePath);
-        } catch (error) {
-            return res.status(500).json({ error: 'Failed to create default image' });
-        }
-        const username = `${firstName}.${lastName}`;
+        const destImagePath = path.join(__dirname, '..', 'uploads/profile_picture', `${firstName}.${lastName}.jpg`)
+        const defaultImgName = await addDefaultImage(firstName, lastName, srcImagePath, destImagePath);
+        const username = firstName + '.' + lastName;
         const adminRole = await Role.findOne({ name: 'admin' });
         if (!adminRole) {
-            adminCreator = await Role.create({ name: 'admin' });
+            adminCreator = await Role.create({name:'admin'});
         }
-        adminData = adminCreator ? adminCreator.id : adminRole.id;
-        const newUser = await User.create({ firstName, lastName, username, password: encryptedPassword, email, role: adminData, filename: defaultImgName, filepath: `uploads/profile_picture/${defaultImgName}`, is_verified: false });
+        (adminCreator === undefined) ? adminData = adminRole.id : adminData = adminCreator.id;
+        const newUser = await User.create({ firstName, lastName, username:username, password: encryptedPassword, email, role: adminData, filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`,is_verified: false  });
         const token = generateToken({ username, email });
-        const verificationUrl = `${process.env.VERIFICATION}${token}`;
+        const verificationUrl = process.env.VERIFICATION + token;
         emailHelper.verificationEmail(email, verificationUrl, username);
         return res.status(201).json({ message: 'User Created', user: newUser });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
-};
-
+}
 
 const resendVerificationEmail = async (req, res) => {
     const { email } = req.body;
@@ -345,22 +339,21 @@ async function tsWorkedHrs(id) {
     }
 }
 
-const addDefaultImage = async (firstName, lastName, srcImagePath, destImagePath) => {
-    try {
+const addDefaultImage = async(firstName, lastName, srcImagePath, destImagePath) => {
+    try{
         const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE);
         const image = await Jimp.read(srcImagePath);
         const firstLetterFirstName = firstName.charAt(0).toUpperCase();
         const firstLetterLastName = lastName.charAt(0).toUpperCase();
         const initials = firstLetterFirstName + firstLetterLastName;
-        image.print(font, 20, 32, initials);
+        image.print(font,20,32,initials);
         await image.writeAsync(destImagePath);
         return `${firstName}.${lastName}.jpg`;
-    } catch (error) {
+    }catch(error){
         console.error(error);
-        throw new Error('Failed to create default image');
+        throw new Error('Internal server error');
     }
-};
-
+}
 
 
 module.exports={
