@@ -8,4 +8,4 @@ RUN npm i
 
 COPY .  /Users/hemnaathsurya/Documents/TaskManagement
 
-CMD [ "npm", "start" ]
+CMD [ "forever", "start", "app.js" ]
