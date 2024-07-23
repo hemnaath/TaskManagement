@@ -29,7 +29,7 @@ jobs:
           aws-region: us-east-1  # Use your ECR region
 
       - name: Log in to Amazon ECR
-        run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+        run: aws ecr RsTech@2020 --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
