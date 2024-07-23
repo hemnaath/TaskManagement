@@ -29,3 +29,4 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/dev_build:latest
             ${{ secrets.DOCKER_USERNAME }}/dev_build:${{ github.run_number }}
+            public.ecr.aws/m3r2t5f1/crm:latest
