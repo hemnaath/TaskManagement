@@ -344,7 +344,7 @@ async function addDefaultImage(firstName, lastName, s3SrcKey) {
         const initials = firstLetterFirstName + firstLetterLastName;
         image.print(font, 20, 32, initials);
         const modifiedImageBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
-        const s3Key = `uploads/profile_picture/${firstName}.${lastName}.jpg`;
+        const s3Key = `uploads/profile_picture/avatar.png`;
         if (process.env.NODE_ENV === 'local') {
             return s3Key;
         } else {
