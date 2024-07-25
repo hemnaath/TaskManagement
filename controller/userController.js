@@ -2,7 +2,9 @@ const {passcrypt, compass} = require('../helper/passwordHelper');
 const {generateToken,generateRefreshToken} = require('../helper/tokenHelper');
 const emailHelper = require('../helper/emailHelper');
 const serverFileHelper = require('../helper/serverFileHelper');
-const fs = require('fs').promises;
+const { URL } = require('url');
+const { getSignedUrl } = require ('@aws-sdk/s3-request-presigner');
+const { S3Client, GetObjectCommand } = require ('@aws-sdk/client-s3');
 const User = require('../model/userModel');
 const Permission= require('../model/permissionModel')
 const Role= require('../model/roleModel')
@@ -222,18 +224,23 @@ const inviteUser = async(req, res)=>{
 }
 
 const uploadDp = async(req, res)=>{
-    const userId = req.user.id;
     try{
-        const exists = await User.findById(userId);
+        const exists = await User.findById(req.user.id);
         if(exists){
-            const existingImagePath = process.env.EXISTING_IMAGE_PATH + exists.filepath;
-            await fs.unlink(existingImagePath);
-            await exists.updateOne({$set:{filename: req.file.originalname, filepath: 'uploads/profile_picture/' + `${req.file.originalname}`}});
-            if(req.file.size <= 1024 * 1024){
-                return res.status(200).json({message:'Image Uploaded'});
-            }else{
-                return res.status(400).json({message:'Image Size too Large'});
+            const existingImagePath = exists.filepath;
+            if(existingImagePath){
+                const parsedURL = new URL(existingImagePath);
+                const s3Key = parsedURL.pathname.substring(1);
+                await serverFileHelper.deleteFileFromS3(s3Key);
             }
+            const buffer = req.file.buffer;
+            const s3Key = `uploads/profile_picture/${req.file.originalname}`;
+            const s3Url = await serverFileHelper.uploadFileToS3(buffer, s3Key);
+            if (req.file.size <= 1024 * 1024){
+                await exists.updateOne({$set: {filename: req.file.originalname, filepath: s3Url}});
+                return res.status(200).json({ message: 'Image Uploaded' });
+            }else
+                return res.status(400).json({ message: 'Image Size too Large' });
         }
         return res.status(404).json({message:'User not Found'});
     }catch(error){
@@ -242,20 +249,30 @@ const uploadDp = async(req, res)=>{
     }
 }
 
-const getDp = async(req, res)=>{
-    try{
-        const userId = req.user.id;
-        const exists = await User.findById(userId);
-        if(exists){
-            const imgLink = 'https://localhost:1731/' + exists.filepath;
-            return res.status(200).json({message:imgLink}); 
+const getDp = async (req, res) => {
+    try {
+        const exists = await User.findById(req.user.id);
+        if (exists) {
+            const client = new S3Client({
+                region: process.env.AWS_BUCKET_REGION,
+                credentials: {
+                    accessKeyId: process.env.AWS_ACCESS_KEY,
+                    secretAccessKey: process.env.AWS_SECRET_KEY,
+                },
+            });            
+            const command = new GetObjectCommand({
+                Bucket: process.env.AWS_BUCKET_NAME,
+                Key: `uploads/profile_picture/${exists.filename}`,
+            });
+            const signedUrl = await getSignedUrl(client, command, { expiresIn: 3600 });
+            return res.status(200).json({ message: signedUrl });
         }
-        return res.status(404).json({message:'User not Found'});
-    }catch(error){
+        return res.status(404).json({ message: 'User not Found' });
+    } catch (error) {
         console.error(error);
-        return res.status(500).json({error:'Internal Server Error'});
+        return res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
 const assignReportingPerson = async(req, res)=>{
     const {userId, reportingPersonId} = req.body;
@@ -344,9 +361,9 @@ async function addDefaultImage(firstName, lastName, s3SrcKey) {
         const initials = firstLetterFirstName + firstLetterLastName;
         image.print(font, 20, 32, initials);
         const modifiedImageBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
-        const s3Key = `uploads/profile_picture/avatar.png`;
+        const s3Key = `uploads/profile_picture/${firstName}.${lastName}.jpg`;
         if (process.env.NODE_ENV === 'local') {
-            return s3Key;
+            return `uploads/profile_picture/avatar.png`;
         } else {
             const s3Url = await serverFileHelper.uploadFileToS3(modifiedImageBuffer, s3Key);
             return s3Url;

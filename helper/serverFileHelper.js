@@ -77,6 +77,7 @@ async function downloadImageFromS3(s3Key) {
 
 
 
+
 module.exports = {
     uploadFileToS3,
     deleteFileFromS3,

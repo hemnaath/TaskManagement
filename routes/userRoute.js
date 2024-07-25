@@ -1,14 +1,16 @@
 const express = require('express');
 const userController = require('../controller/userController');
 const passport = require('../middleware/auth');
-const { upload } = require('../helper/fileHelper');
 const createRateLimiter = require('../middleware/rateLimiter');
 const {sessionStatus} = require('../middleware/session');
+const multer = require('multer');
 
 
 
 const authenticateUser = passport.authenticate('jwt', { session: false });
 const router = express.Router();
+const storage = multer.memoryStorage();
+const upload = multer({storage:storage});
 
 
 router.post('/register', createRateLimiter(10 * 60 * 1000, 50), userController.register);
@@ -23,10 +25,7 @@ router.post('/logout', authenticateUser, createRateLimiter(10 * 60 * 1000, 100),
 router.post('/invite-user', userController.inviteUser);
 router.post('/send-invite', authenticateUser, createRateLimiter(10 * 60 * 1000, 100), sessionStatus, userController.sendInvite);
 router.patch('/assign-reporting-person', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), sessionStatus, userController.assignReportingPerson);
-if(process.env.NODE_ENV === 'local'){
-    router.patch('/dp-upload', authenticateUser, upload.single('File'), createRateLimiter(10 * 60 * 1000, 50), sessionStatus, userController.uploadDp);
-}else{
-    router.patch('/dp-upload', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), sessionStatus, userController.uploadDp);
-}
+router.patch('/dp-upload', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), upload.single('File'), sessionStatus, userController.uploadDp);
+
 
 module.exports = router;
