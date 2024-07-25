@@ -9,6 +9,20 @@ const s3Client = new S3Client({
     },
 });
 
+async function createDirectory(directoryName) {
+    try {
+        const params = {
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: `uploads/task/${directoryName}/`,
+            Body: ''
+        };
+        const command = new PutObjectCommand(params);
+        await s3Client.send(command);
+    } catch (err) {
+        console.error('Error creating directory:', err);
+    }
+}
+
 async function uploadFileToS3(buffer, s3Key) {
     try {
         const params = {
@@ -83,5 +97,6 @@ module.exports = {
     deleteFileFromS3,
     listFilesInS3,
     downloadImageFromS3,
+    createDirectory,
 };
 

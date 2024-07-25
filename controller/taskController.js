@@ -12,6 +12,8 @@ const createTask = async (req, res) => {
                 return res.status(400).json({message:'Task with the same title already exists'});
             else {
                 const newTask = await Task.create({task_title:taskTitle, task_type:taskType, created_by:req.user.id, project_id:projectId});
+                const taskIdentifier = taskType + '-' + newTask.task_number;
+                await serverFileHelper.createDirectory(taskIdentifier);
                 return res.status(201).json({message:'Task Created', newTask});
             }
     }catch(error){
