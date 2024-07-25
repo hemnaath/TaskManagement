@@ -1,6 +1,6 @@
 const Task = require('../model/taskModel');
 const Comment = require('../model/commentModel');
-const fileHelper = require('../helper/fileHelper');
+const serverFileHelper = require('../helper/serverFileHelper');
 const path = require('path')
 
 const createTask = async (req, res) => {
