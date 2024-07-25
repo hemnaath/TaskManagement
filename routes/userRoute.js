@@ -16,7 +16,6 @@ router.get('/verify-email', createRateLimiter(10 * 60 * 1000, 100),userControlle
 router.post('/resend-verification-email', createRateLimiter(10 * 60 * 1000, 100),userController.resendVerificationEmail)
 router.post('/login', createRateLimiter(10 * 60 * 1000, 100), userController.login);
 router.post('/refreshToken',authenticateUser, createRateLimiter(10 * 60 * 1000, 100), sessionStatus, userController.refreshToken);
-router.patch('/dp-upload', authenticateUser, upload.single('File'), createRateLimiter(10 * 60 * 1000, 50), sessionStatus, userController.uploadDp);
 router.patch('/reset-password', createRateLimiter(10 * 60 * 1000, 50), userController.resetPassword);
 router.post('/forget-password', createRateLimiter(10 * 60 * 1000, 50), userController.forgetPassword);
 router.get('/get-dp', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), sessionStatus, userController.getDp);
@@ -24,5 +23,10 @@ router.post('/logout', authenticateUser, createRateLimiter(10 * 60 * 1000, 100),
 router.post('/invite-user', userController.inviteUser);
 router.post('/send-invite', authenticateUser, createRateLimiter(10 * 60 * 1000, 100), sessionStatus, userController.sendInvite);
 router.patch('/assign-reporting-person', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), sessionStatus, userController.assignReportingPerson);
+if(process.env.NODE_ENV === 'local'){
+    router.patch('/dp-upload', authenticateUser, upload.single('File'), createRateLimiter(10 * 60 * 1000, 50), sessionStatus, userController.uploadDp);
+}else{
+    router.patch('/dp-upload', authenticateUser, createRateLimiter(10 * 60 * 1000, 50), sessionStatus, userController.uploadDp);
+}
 
 module.exports = router;
