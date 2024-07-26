@@ -23,6 +23,21 @@ async function createDirectory(directoryName) {
     }
 }
 
+async function deleteDirectory(directoryName){
+    try{
+        const params = {
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: `uploads/task/${directoryName}/`,
+            Body: ''
+        };
+        const command = new DeleteObjectCommand(params);
+        await s3Client.send(command);
+    }catch(error){
+        console.error(error);
+        throw new error('Failed to delete the directory');
+    }
+}
+
 async function uploadFileToS3(buffer, s3Key) {
     try {
         const params = {
@@ -98,5 +113,6 @@ module.exports = {
     listFilesInS3,
     downloadImageFromS3,
     createDirectory,
+    deleteDirectory,
 };
 

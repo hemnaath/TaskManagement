@@ -2,7 +2,8 @@ const Task = require('../model/taskModel');
 const Comment = require('../model/commentModel');
 const Project = require('../model/projectModel');
 const serverFileHelper = require('../helper/serverFileHelper');
-const path = require('path')
+
+
 
 const createTask = async (req, res) => {
     const projectId = req.params.id;
@@ -54,20 +55,23 @@ const updateTask = async (req, res) => {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
-};
-
-
-
+}
 
 const deleteTask = async(req, res)=>{
     const taskId = req.params.id;
     try{
         const exists = await Task.findById(taskId);
         if(exists){
+            const taskIdentifier = exists.task_type + '-' + exists.task_number;
             await Comment.deleteMany({task_id:taskId});
-            await Task.deleteMany({parent_task:taskId});
             await exists.deleteOne();
-            fileHelper.deleteDirectory(process.env.EXISTING_IMAGE_PATH + exists.filepath);
+            await serverFileHelper.deleteDirectory(taskIdentifier);
+            const childTask = await Task.find({parent_task:taskId});
+            for(let key of childTask){
+                const childTaskIdentifier = key.task_type + '-' + key.task_number;
+                await serverFileHelper.deleteDirectory(childTaskIdentifier);
+                await key.deleteOne();
+            }
             return res.status(200).json({message:'Task Deleted'});
         }else{
             return res.status(404).json({message:'No Tasks Found'});
@@ -90,6 +94,8 @@ const getTask = async(req, res)=>{
         return res.status(500).json({error:'Internal server error'});
     }
 }
+
+
 
 module.exports={
     createTask,
