@@ -26,19 +26,32 @@ const updateTask = async (req, res) => {
     const taskId = req.params.id;
     const { taskTitle, description, notes, assignedTo, priority, effortEstimation, status, releaseVersion, parentTask } = req.body;
     try {
-        const task = await Task.findById(taskId);
-        if (!task)
+        const exists = await Task.findById(taskId);
+        if (exists) {
+            if (req.file) {
+                const fileName = Date.now() + '_' + req.file.originalname
+                const buffer = req.file.buffer;
+                const s3Key = `uploads/task/${exists.task_type}-${exists.task_number}/${fileName}`;
+                const s3Url = await serverFileHelper.uploadFileToS3(buffer, s3Key);
+                const newAttachment = {filename: fileName, filepath: s3Url};
+                const taskUpdate = await exists.updateOne({$set: {task_title: taskTitle, description, notes, assigned_to: assignedTo, 
+                priority, effort_estimation: effortEstimation, status, release_version: releaseVersion, parent_task: parentTask}, $push: { attachments: newAttachment },});
+                return res.status(200).json({ message: 'Task updated with new attachment', taskUpdate });
+            } else {
+                const taskUpdate = await exists.updateOne({$set: {task_title: taskTitle, description, notes, assigned_to: assignedTo, 
+                priority, effort_estimation: effortEstimation, status, release_version: releaseVersion, parent_task: parentTask}});
+                return res.status(200).json({ message: 'Task updated without new attachment', taskUpdate });
+            }
+        } else {
             return res.status(400).json({ message: 'No task exists' });
-        const updates = {task_title:taskTitle, description:description, notes:notes, filepath:path.dirname(req.file.path), assigned_to:assignedTo, priority:priority, effort_estimation:effortEstimation, status:status, release_version:releaseVersion, parent_task:parentTask};
-        if (status === 'accepted' && !task.start_date)
-            updates.start_date = new Date().toISOString().split('T')[0];
-        const taskUpdates = await Task.findByIdAndUpdate(taskId, updates, { new: true });
-        return res.status(200).json({ message: 'Task updated', taskUpdates });
+        }
     } catch (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
+
+
 
 
 const deleteTask = async(req, res)=>{
