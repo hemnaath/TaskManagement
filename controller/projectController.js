@@ -1,7 +1,7 @@
 const Project = require('../model/projectModel');
 const Task = require('../model/taskModel');
 const Comment = require('../model/commentModel');
-const fileHelper = require('../helper/fileHelper');
+const serverFileHelper = require('../helper/serverFileHelper');
 
 const createProject = async(req, res)=>{
     const {projectName} = req.body;
@@ -55,9 +55,10 @@ const deleteProject = async (req, res)=>{
         if(exists){
             const associatedTask = await Task.find({project_id:projectId});
             for(let key of associatedTask){
-                fileHelper.deleteDirectory(process.env.EXISTING_IMAGE_PATH + key.filepath);
+                const associatedTaskIdentifier = key.task_type + '-' + key.task_number;
+                await serverFileHelper.deleteDirectory(associatedTaskIdentifier);
+                await key.deleteOne();
             }
-            await Task.deleteMany({project_id:projectId});
             await Comment.deleteMany({project_id:projectId});
             await exists.deleteOne();
             return res.status(200).json({message:'Project Deleted'});
