@@ -54,10 +54,12 @@ const deleteProject = async (req, res)=>{
         const exists = await Project.findById(projectId);
         if(exists){
             const associatedTask = await Task.find({project_id:projectId});
-            for(let key of associatedTask){
-                const associatedTaskIdentifier = key.task_type + '-' + key.task_number;
-                await serverFileHelper.deleteDirectory(associatedTaskIdentifier);
-                await key.deleteOne();
+            if(associatedTask.length > 0){
+                for(let key of associatedTask){
+                    const associatedTaskIdentifier = key.task_type + '-' + key.task_number;
+                    await serverFileHelper.deleteDirectory(associatedTaskIdentifier);
+                    await key.deleteOne();
+                }
             }
             await Comment.deleteMany({project_id:projectId});
             await exists.deleteOne();
