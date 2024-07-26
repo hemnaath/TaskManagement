@@ -1,5 +1,6 @@
 const Task = require('../model/taskModel');
 const Comment = require('../model/commentModel');
+const Project = require('../model/projectModel');
 const serverFileHelper = require('../helper/serverFileHelper');
 const path = require('path')
 
@@ -7,7 +8,9 @@ const createTask = async (req, res) => {
     const projectId = req.params.id;
     const { taskTitle, taskType } = req.body;
     try{
-        const exists = await Task.findOne({task_title:taskTitle});
+        const findProject = await Project.findById(projectId);
+        if(findProject){
+            const exists = await Task.findOne({task_title:taskTitle});
             if (exists)
                 return res.status(400).json({message:'Task with the same title already exists'});
             else {
@@ -16,6 +19,8 @@ const createTask = async (req, res) => {
                 await serverFileHelper.createDirectory(taskIdentifier);
                 return res.status(201).json({message:'Task Created', newTask});
             }
+        }else
+            return res.status(404).json({message:'No projects found'});
     }catch(error){
         console.error(error);
         return res.status(500).json({error:'Internal Server Error'});
