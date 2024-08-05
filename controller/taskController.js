@@ -5,6 +5,7 @@ const serverFileHelper = require('../helper/serverFileHelper');
 
 
 
+
 const createTask = async (req, res) => {
     const projectId = req.params.id;
     const { taskTitle, taskType } = req.body;
@@ -64,14 +65,14 @@ const deleteTask = async(req, res)=>{
         if(exists){
             const taskIdentifier = exists.task_type + '-' + exists.task_number;
             await Comment.deleteMany({task_id:taskId});
-            await exists.deleteOne();
-            await serverFileHelper.deleteDirectory(taskIdentifier);
             const childTask = await Task.find({parent_task:taskId});
             for(let key of childTask){
                 const childTaskIdentifier = key.task_type + '-' + key.task_number;
                 await serverFileHelper.deleteDirectory(childTaskIdentifier);
                 await key.deleteOne();
             }
+            await exists.deleteOne();
+            await serverFileHelper.deleteDirectory(taskIdentifier);
             return res.status(200).json({message:'Task Deleted'});
         }else{
             return res.status(404).json({message:'No Tasks Found'});

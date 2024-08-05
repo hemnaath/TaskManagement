@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command, GetObjectCommand } = require('@aws-sdk/client-s3');
 
 
 const s3Client = new S3Client({
@@ -23,18 +23,26 @@ async function createDirectory(directoryName) {
     }
 }
 
-async function deleteDirectory(directoryName){
-    try{
+async function deleteDirectory(directoryName) {
+    try {
         const params = {
             Bucket: process.env.AWS_BUCKET_NAME,
-            Key: `uploads/task/${directoryName}/`,
-            Body: ''
+            Prefix: `uploads/task/${directoryName}/`,
         };
-        const command = new DeleteObjectCommand(params);
-        await s3Client.send(command);
-    }catch(error){
+        const listedObjects = await s3Client.send(new ListObjectsV2Command(params));
+        if (listedObjects.Contents.length === 0) {
+            return res.status(400).json({message:'No objects to delete'});
+        }
+        const deleteParams = {
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Delete: {
+                Objects: listedObjects.Contents.map(({ Key }) => ({ Key })),
+            },
+        };
+        await s3Client.send(new DeleteObjectsCommand(deleteParams));
+    } catch (error) {
         console.error(error);
-        throw new error('Failed to delete the directory');
+        throw new Error('Failed to delete the directory');
     }
 }
 
