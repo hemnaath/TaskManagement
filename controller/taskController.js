@@ -58,30 +58,35 @@ const updateTask = async (req, res) => {
     }
 }
 
-const deleteTask = async(req, res)=>{
+const deleteTask = async (req, res) => {
     const taskId = req.params.id;
-    try{
-        const exists = await Task.findById(taskId);
-        if(exists){
-            const taskIdentifier = exists.task_type + '-' + exists.task_number;
-            await Comment.deleteMany({task_id:taskId});
-            const childTask = await Task.find({parent_task:taskId});
-            for(let key of childTask){
-                const childTaskIdentifier = key.task_type + '-' + key.task_number;
-                await serverFileHelper.deleteDirectory(childTaskIdentifier);
-                await key.deleteOne();
-            }
-            await exists.deleteOne();
-            await serverFileHelper.deleteDirectory(taskIdentifier);
-            return res.status(200).json({message:'Task Deleted'});
-        }else{
-            return res.status(404).json({message:'No Tasks Found'});
+    const deleteChildTasks = async (parentId) => {
+        const childTasks = await Task.find({ parent_task: parentId });
+        for (const childTask of childTasks) {
+            const childTaskIdentifier = `${childTask.task_type}-${childTask.task_number}`;
+            await deleteChildTasks(childTask._id);
+            await serverFileHelper.deleteDirectory(childTaskIdentifier);
+            await childTask.deleteOne();
         }
-    }catch(error){
-        console.error(error);
-        return res.status(500).json({error:'Internal Server Error'});
     }
-}
+    try {
+        const task = await Task.findById(taskId);
+        if (task) {
+            const taskIdentifier = `${task.task_type}-${task.task_number}`;
+            await Comment.deleteMany({ task_id: taskId });
+            await deleteChildTasks(taskId);
+            await serverFileHelper.deleteDirectory(taskIdentifier);
+            await task.deleteOne();
+            return res.status(200).json({ message: 'Task Deleted' });
+        } else {
+            return res.status(404).json({ message: 'No Tasks Found' });
+        }
+    } catch (error) {
+        console.error('Error deleting task:', error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 
 const getTask = async(req, res)=>{
     const taskId = req.params.id;
