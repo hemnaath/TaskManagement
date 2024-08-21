@@ -2,13 +2,13 @@ const Org = require('../model/orgModel');
 const User = require('../model/userModel');
 
 const createOrg = async(req, res)=>{
-    const {orgName, orgType, orgPrefix} = req.body;
+    const {orgName, orgType} = req.body;
     try{
         const exists = await Org.findOne({org_name:orgName});
         if(exists){
             return res.status(400).json({message:'Org Exists'});
         }else{
-            const creator = await Org.create({org_name:orgName, org_type:orgType, org_prefix:orgPrefix});
+            const creator = await Org.create({org_name:orgName, org_type:orgType});
             const updateExists = await User.findById(req.user.id);
             if(updateExists){
                 await updateExists.updateOne({$set:{org_id: creator.id}});
@@ -38,11 +38,11 @@ const getOrg = async (req, res)=>{
 
 const updateOrg = async(req, res)=>{
     const orgId = req.params.id;
-    const {orgName, orgType, orgPrefix} = req.body;
+    const {orgName, orgType} = req.body;
     try{
         const exists = await Org.findById(orgId);
         if(exists){
-            await exists.updateOne({$set:{org_name:orgName, org_type:orgType, org_prefix:orgPrefix}});
+            await exists.updateOne({$set:{org_name:orgName, org_type:orgType}});
             return res.status(204).json({message:'Org updated'});
         }
     }catch(error){
