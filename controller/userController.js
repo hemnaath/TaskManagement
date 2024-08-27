@@ -80,7 +80,7 @@ const login = async (req, res) => {
         const isPasswordMatch = await compass(password, user.password);
         if (!isPasswordMatch) {
             return res.status(404).json({ message: 'Invalid email or password' });
-        }s
+        }
         const accessToken = generateToken({ role: user.role, id: user.id, org: user.org_id });
         const refreshToken = generateRefreshToken({ role: user.role, id: user.id, org: user.org_id });
         req.session.accessToken = accessToken;
