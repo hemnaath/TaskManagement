@@ -189,6 +189,7 @@ const sendInvite = async (req, res) => {
         }
         (viewerCreator === undefined) ? viewerData = viewerRole.id : viewerData = viewerCreator.id;
         const token = generateToken(req.user.org_id);
+        console.log(token);
         const url = `${process.env.SEND_INVITE}${token}`;
         await emailHelper.inviteMail(to, url);
         await User.create({ email: to, role: viewerData, is_verified: true });
@@ -212,12 +213,11 @@ const inviteUser = async(req, res)=>{
             return res.status(400).json({message:'Invalid token'});
         const orgId = decodedToken.payload;
         const encryptedPassword = await passcrypt(password, process.env.SALT_ROUNDS);
-        const srcImagePath = path.join(__dirname, '..', 'uploads/profile_picture', 'avatar.png');
-        const destImagePath = path.join(__dirname, '..', 'uploads/profile_picture', `${firstName}.${lastName}.jpg`)
-        const defaultImgName = await addDefaultImage(firstName, lastName, srcImagePath, destImagePath);
+        const s3SrcKey = 'uploads/profile_picture/avatar.png';
+        const defaultImgName = await addDefaultImage(firstName, lastName, s3SrcKey);
         const username = firstName + '.' + lastName;
         if(exists){
-            await User.findOneAndUpdate({email:email},{$set:{ username:username, password: encryptedPassword, org_id:orgId, filename:defaultImgName, filepath:`uploads/profile_picture/${defaultImgName}`} });
+            await User.findOneAndUpdate({email:email},{$set:{ username:username, password: encryptedPassword, org_id:orgId, filename:`${username}.jpg`, filepath:defaultImgName} });
             return res.status(201).json({ message: 'User Created'});
         }else
             return res.status(404).json({message:'No user found invited'});
