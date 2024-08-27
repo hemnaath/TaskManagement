@@ -16,7 +16,6 @@ const roleRouting=require('./routes/roleRoute')
 const moduleRouting = require('./routes/moduleRoute');
 const functionalityRouting=require('./routes/functionalityRoute')
 const permissionRouting=require('./routes/permissionRoute')
-const chatRouting = require('./routes/chatRoute');
 const app = express();
 
 app.use(session({
@@ -49,11 +48,10 @@ app.use('/api', taskRouting);
 app.use('/api', commentRouting);
 app.use('/api', leaveRouting);
 app.use('/api', timesheetRouting);
-app.use('/api', roleRouting);
-app.use('/api', moduleRouting);
-app.use('/api', functionalityRouting);
-app.use('/api', permissionRouting);
-app.use('/api', chatRouting);
+app.use('/api', roleRouting)
+app.use('/api', moduleRouting)
+app.use('/api', functionalityRouting)
+app.use('/api', permissionRouting)
 
 
 app.listen(1731, ()=>{
