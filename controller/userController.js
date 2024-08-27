@@ -34,7 +34,7 @@ const register = async (req, res) => {
         let adminRole = await Role.findOne({ name: 'admin' });
         if (!adminRole)
             adminRole = await Role.create({ name: 'admin' });
-        const newUser = await User.create({firstName, lastName, username, password: encryptedPassword, email, role: adminRole.id, filename: `${firstName}.${lastName}.jpg`, filepath: defaultImgUrl, is_verified: false});
+        const newUser = await User.create({firstName, lastName, username, password: encryptedPassword, email, role: ObjectId.createFromHexString(adminRole.id), filename: `${firstName}.${lastName}.jpg`, filepath: defaultImgUrl, is_verified: false});
         const token = generateToken({ username, email });
         const verificationUrl = `${process.env.VERIFICATION}${token}`;
         await emailHelper.verificationEmail(email, verificationUrl, username);
