@@ -70,51 +70,55 @@ const login = async (req, res) => {
     try {
         let timesheetExists = null;
         let orgFlag = true;
-        const exists = await User.findOne({email});
-        if (exists) {
-            if (!exists.is_verified) {
-                return res.status(403).json({ message: 'Please verify your email before logging in.' });
-            }
-            const comparePassword = await compass(password, exists.password);
-            if (comparePassword) {
-                const accessToken = generateToken({ role: exists.role, id: exists.id, org: exists.org_id });
-                const refreshToken = generateRefreshToken({ role: exists.role, id: exists.id, org: exists.org_id });
-                req.session.accessToken = accessToken;
-                req.session.refreshToken = refreshToken;
-                const pipeline = [
-                    {
-                        $lookup: {
-                            from: 'modules',
-                            localField: 'permissions.module_id',
-                            foreignField: '_id',
-                            as: 'modules'
-                        }
-                    },
-                    {
-                        $match: { role: ObjectId.createFromHexString(exists.role) }
-                    }
-                ];
-                const permissions = await Permission.aggregate(pipeline);
-                if (exists.org_id) {
-                    orgFlag = false;
-                }
-                const timezone = { hour12: false, timeZone: 'Asia/Kolkata' };
-                const currentDate = new Date().toISOString().split('T')[0];
-                const currentTime = new Date().toLocaleTimeString('en-IN', timezone);
-                timesheetExists = await Timesheet.findOne({$and:[{date:currentDate}, {user_id:exists.id}]});
-                if(timesheetExists == null || timesheetExists == undefined){
-                    await Timesheet.create({ date: currentDate, user_id: exists.id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
-                }
-                await exists.updateOne({$set:{is_loggedIn:true}});
-                return res.status(200).json({ accessToken,refreshToken, username: exists.username, permissions,isOrgIdRequired: orgFlag});
-            }
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'Invalid email or password' });
         }
-        return res.status(404).json({message:'User Not Found'});
+        if (!user.is_verified) {
+            return res.status(403).json({ message: 'Please verify your email before logging in.' });
+        }
+        const isPasswordMatch = await compass(password, user.password);
+        if (!isPasswordMatch) {
+            return res.status(404).json({ message: 'Invalid email or password' });
+        }s
+        const accessToken = generateToken({ role: user.role, id: user.id, org: user.org_id });
+        const refreshToken = generateRefreshToken({ role: user.role, id: user.id, org: user.org_id });
+        req.session.accessToken = accessToken;
+        req.session.refreshToken = refreshToken;
+
+        const roleWithPermissions = await Permission.findOne({ role: user.role });
+        if (!roleWithPermissions) {
+            return res.status(403).json({ error: 'Forbidden: No permissions found for this role' });
+        }
+        const permissions = roleWithPermissions.permissions.flatMap(permission =>
+            permission.functionalities.map(func => ({
+                functionality_name: func.functionality_name,
+                allowed: func.allowed
+            }))
+        );
+        if (user.org_id) {
+            orgFlag = false;
+        }
+        const currentDate = new Date().toISOString().split('T')[0];
+        const currentTime = new Date().toLocaleTimeString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata' });
+        
+        timesheetExists = await Timesheet.findOne({ date: currentDate, user_id: user.id });
+        if (!timesheetExists) {
+            await Timesheet.create({ date: currentDate, user_id: user.id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
+        }
+        await user.updateOne({ $set: { is_loggedIn: true } });
+        return res.status(200).json({ 
+            accessToken, 
+            refreshToken, 
+            username: user.username, 
+            permissions, 
+            isOrgIdRequired: orgFlag 
+        });
     } catch (error) {
         console.error(error);
-        return res.status(500).json({error:'Internal Server Error'});
+        return res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
 const refreshToken = async (req, res) => {
     const { refreshToken } = req.body;
