@@ -3,6 +3,7 @@ const {generateToken,generateRefreshToken} = require('../helper/tokenHelper');
 const emailHelper = require('../helper/emailHelper');
 const serverFileHelper = require('../helper/serverFileHelper');
 const { URL } = require('url');
+const { redisClient } = require('../redis/redisClient');
 const { getSignedUrl } = require ('@aws-sdk/s3-request-presigner');
 const { S3Client, GetObjectCommand } = require ('@aws-sdk/client-s3');
 const User = require('../model/userModel');
@@ -107,6 +108,7 @@ const login = async (req, res) => {
             await Timesheet.create({ date: currentDate, user_id: user.id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
         }
         await user.updateOne({ $set: { is_loggedIn: true } });
+        redisClient.setEx(`email:${user.email}`, 2629746, JSON.stringify(user));
         return res.status(200).json({ 
             accessToken, 
             refreshToken, 
