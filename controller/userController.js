@@ -7,8 +7,6 @@ const { redisClient } = require('../redis/redisClient');
 const { getSignedUrl } = require ('@aws-sdk/s3-request-presigner');
 const { S3Client, GetObjectCommand } = require ('@aws-sdk/client-s3');
 const User = require('../model/userModel');
-const Permission= require('../model/permissionModel')
-const Role= require('../model/roleModel')
 const jwt = require('jsonwebtoken');
 const Timesheet = require('../model/timesheetModel');
 const {jwtDecode} = require('jwt-decode');
@@ -32,10 +30,7 @@ const register = async (req, res) => {
         const s3SrcKey = 'uploads/profile_picture/avatar.png';
         const defaultImgUrl = await addDefaultImage(firstName, lastName, s3SrcKey);
         const username = `${firstName}.${lastName}`;
-        let adminRole = await Role.findOne({ name: 'admin' });
-        if (!adminRole)
-            adminRole = await Role.create({ name: 'admin' });
-        const newUser = await User.create({firstName, lastName, username, password: encryptedPassword, email, role: ObjectId.createFromHexString(adminRole.id), filename: `${firstName}.${lastName}.jpg`, filepath: defaultImgUrl, is_verified: false});
+        const newUser = await User.create({firstName, lastName, username, password: encryptedPassword, email, role: 'admin', filename: `${firstName}.${lastName}.jpg`, filepath: defaultImgUrl, is_verified: false});
         const token = generateToken({ username, email });
         const verificationUrl = `${process.env.VERIFICATION}${token}`;
         await emailHelper.verificationEmail(email, verificationUrl, username);
@@ -72,48 +67,28 @@ const login = async (req, res) => {
         let timesheetExists = null;
         let orgFlag = true;
         const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'Invalid email or password' });
-        }
-        if (!user.is_verified) {
+        if (!user)
+            return res.status(404).json({ message: 'User not found' });
+        if (!user.is_verified)
             return res.status(403).json({ message: 'Please verify your email before logging in.' });
-        }
         const isPasswordMatch = await compass(password, user.password);
-        if (!isPasswordMatch) {
-            return res.status(404).json({ message: 'Invalid email or password' });
-        }
+        if (!isPasswordMatch)
+            return res.status(401).json({ message: 'Invalid email or password' });
         const accessToken = generateToken({ role: user.role, id: user.id, org: user.org_id });
         const refreshToken = generateRefreshToken({ role: user.role, id: user.id, org: user.org_id });
-        req.session.accessToken = accessToken;
-        req.session.refreshToken = refreshToken;
-
-        const roleWithPermissions = await Permission.findOne({ role: user.role });
-        if (!roleWithPermissions) {
-            return res.status(403).json({ error: 'Forbidden: No permissions found for this role' });
-        }
-        const permissions = roleWithPermissions.permissions.flatMap(permission =>
-            permission.functionalities.map(func => ({
-                functionality_name: func.functionality_name,
-                allowed: func.allowed
-            }))
-        );
-        if (user.org_id) {
+        if (user.org_id)
             orgFlag = false;
-        }
         const currentDate = new Date().toISOString().split('T')[0];
         const currentTime = new Date().toLocaleTimeString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata' });
-        
         timesheetExists = await Timesheet.findOne({ date: currentDate, user_id: user.id });
-        if (!timesheetExists) {
+        if (!timesheetExists)
             await Timesheet.create({ date: currentDate, user_id: user.id, in_time: currentTime, out_time: currentTime, worked_hours: 0 });
-        }
         await user.updateOne({ $set: { is_loggedIn: true } });
         redisClient.setEx(`email:${user.email}`, 2629746, JSON.stringify(user));
         return res.status(200).json({ 
             accessToken, 
             refreshToken, 
             username: user.username, 
-            permissions, 
             isOrgIdRequired: orgFlag 
         });
     } catch (error) {
@@ -179,21 +154,15 @@ const resetPassword = async(req, res)=>{
 
 const sendInvite = async (req, res) => {
     const { to } = req.body;
-    let viewerCreator, viewerData = null;
     try {
         const userExists = await User.findOne({ email: to });
         if (userExists) {
             return res.status(403).json({ message: 'User already exists' });
         }
-        const viewerRole = await Role.findOne({ name: 'viewer' });
-        if (!viewerRole) {
-            viewerCreator = await Role.create({name:'viewer'});
-        }
-        (viewerCreator === undefined) ? viewerData = viewerRole.id : viewerData = viewerCreator.id;
         const token = generateToken(req.user.org_id);
         const url = `${process.env.SEND_INVITE}${token}`;
         await emailHelper.inviteMail(to, url);
-        await User.create({ email: to, role: viewerData, is_verified: true });
+        await User.create({ email: to, role: 'viewer', is_verified: true });
         return res.status(200).json({ message: 'Invite sent' });
     } catch (error) {
         console.error(error);
@@ -320,8 +289,8 @@ const verifyEmail = async (req, res) => {
     }
     try {
         const decoded = jwt.verify(token, process.env.SECRET_KEY);
-        const email = decoded.email;
-        const userData = await User.findOne(email);
+        const email = decoded.payload.email;
+        const userData = await User.findOne({email});
         if (!userData)
             return res.status(400).json({ error: 'Invalid token or user not found' });
         if (userData.is_verified)
