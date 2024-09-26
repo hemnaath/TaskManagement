@@ -8,4 +8,4 @@ RUN npm install -g forever && npm install
 
 COPY .  /Users/hemnaathsurya/Documents/TaskManagement
 
-CMD ["forever", "start", "-c", "node", "app.js"]
+CMD ["npm", "start"]
